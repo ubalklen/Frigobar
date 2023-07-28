@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "refrigerator"
+version = "0.0.1"
+description = "Some description"
+authors = [
+    {name="ubalklen", email="42127323+ubalklen@users.noreply.github.com"},
+]
+readme = "readme.md"
+dependencies = ["dependence1", "dependence2"]
+
+[project.urls]
+"Homepage" = "https://github.com/ubalklen/my_package"
+"Bug Tracker" = "https://github.com/ubalklen/my_package/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["my_package"]
