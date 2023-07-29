@@ -5,16 +5,18 @@ build-backend = "hatchling.build"
 [project]
 name = "refrigerator"
 version = "0.0.1"
-description = "Some description"
+description = "Distribute Python apps to Windows machines without freezing them."
 authors = [
     {name="ubalklen", email="42127323+ubalklen@users.noreply.github.com"},
 ]
 readme = "readme.md"
-dependencies = ["dependence1", "dependence2"]
 
 [project.urls]
 "Homepage" = "https://github.com/ubalklen/my_package"
 "Bug Tracker" = "https://github.com/ubalklen/my_package/issues"
 
+[project.scripts]
+refrigerator = "refrigerator.cli:main"
+
 [tool.hatch.build.targets.wheel]
-packages = ["my_package"]
+packages = ["refrigerator"]
