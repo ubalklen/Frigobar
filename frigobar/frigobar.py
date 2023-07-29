@@ -13,9 +13,9 @@ powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" 
 "%~dp0/python-{python_version}-embed-amd64/python.exe" "{rel_script_path}"'''
 
 
-def create_refrigerator(
+def create_frigobar(
     script_path: str,
-    target_directory: str = "refrigerator",
+    target_directory: str = "frigobar",
     python_version: str = "3.11.4",
     requirements_file: str = None,
     copy_directory: bool = False,
@@ -38,7 +38,7 @@ def create_refrigerator(
     ):
         raise Exception(f"Missing requirements file: {requirements_file}")
 
-    # Add a copy of the script to refrigerator
+    # Add a copy of the script to frigobar
     script_dir = os.path.join(target_directory, "script")
     os.mkdir(script_dir)
     if not copy_directory:
@@ -46,11 +46,11 @@ def create_refrigerator(
     else:
         shutil.copytree(os.path.dirname(script_path), script_dir, dirs_exist_ok=True)
 
-    # Add a copy of the requirements file to refrigerator
+    # Add a copy of the requirements file to frigobar
     if requirements_file:
         shutil.copy(requirements_file, script_dir)
 
-    # Add a copy of the downloaders to refrigerator
+    # Add a copy of the downloaders to frigobar
     downloaders_dir = os.path.join(os.path.dirname(__file__), "downloaders")
     downloader_scripts = (
         [
@@ -109,8 +109,8 @@ def create_refrigerator(
             )
 
 
-def fill_refrigerator(refrigerator_path: str):
-    bat_pattern = os.path.join(refrigerator_path, "*.bat")
+def fill_frigobar(frigobar_path: str):
+    bat_pattern = os.path.join(frigobar_path, "*.bat")
     bat_file = glob.glob(bat_pattern)[0]
     p = Popen(bat_file)
     stdout, stderr = p.communicate()

@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "refrigerator"
-version = "0.0.1"
+name = "frigobar"
+version = "0"
 description = "Distribute Python apps to Windows machines without freezing them."
 authors = [
     {name="ubalklen", email="42127323+ubalklen@users.noreply.github.com"},
@@ -16,7 +16,7 @@ readme = "readme.md"
 "Bug Tracker" = "https://github.com/ubalklen/my_package/issues"
 
 [project.scripts]
-refrigerator = "refrigerator.cli:main"
+frigobar = "frigobar.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["refrigerator"]
+packages = ["frigobar"]

@@ -1,28 +1,27 @@
-import os
 import shutil
 from os import path
 
 import pytest
 
-from refrigerator import refrigerator
+from frigobar import frigobar
 
 test_dir = path.dirname(__file__)
-target_dir = path.join(test_dir, "test_refrigerator")
-downloaders_dir = path.join(path.dirname(test_dir), "refrigerator", "downloaders")
+target_dir = path.join(test_dir, "test_frigobar")
+downloaders_dir = path.join(path.dirname(test_dir), "frigobar", "downloaders")
 script_path = path.join(test_dir, "script_folder", "script.py")
 requirements_file = path.join(test_dir, "script_folder", "requirements.txt")
 python_version = "3.8.5"
 
 
 @pytest.fixture(autouse=True)
-def delete_test_refrigerator():
+def delete_test_frigobar():
     shutil.rmtree(target_dir, ignore_errors=True)
     yield
     shutil.rmtree(target_dir, ignore_errors=True)
 
 
-def test_create_simple_refrigerator():
-    refrigerator.create_refrigerator(
+def test_create_simple_frigobar():
+    frigobar.create_frigobar(
         script_path=script_path,
         target_directory=target_dir,
         requirements_file=requirements_file,
@@ -47,8 +46,8 @@ powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -R
         )
 
 
-def test_create_refrigerator_with_folder():
-    refrigerator.create_refrigerator(
+def test_create_frigobar_with_folder():
+    frigobar.create_frigobar(
         script_path=script_path,
         target_directory=target_dir,
         requirements_file=requirements_file,
@@ -77,8 +76,8 @@ powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -R
         )
 
 
-def test_create_refrigerator_without_reqs():
-    refrigerator.create_refrigerator(
+def test_create_frigobar_without_reqs():
+    frigobar.create_frigobar(
         script_path=script_path,
         target_directory=target_dir,
         requirements_file=None,
@@ -101,14 +100,14 @@ powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" 
         )
 
 
-def test_fill_refrigerator():
-    refrigerator.create_refrigerator(
+def test_fill_frigobar():
+    frigobar.create_frigobar(
         script_path=script_path,
         target_directory=target_dir,
         requirements_file=requirements_file,
         python_version=python_version,
     )
-    refrigerator.fill_refrigerator(refrigerator_path=target_dir)
+    frigobar.fill_frigobar(frigobar_path=target_dir)
     assert path.exists(path.join(target_dir, f"python-{python_version}-embed-amd64"))
     assert path.exists(
         path.join(
