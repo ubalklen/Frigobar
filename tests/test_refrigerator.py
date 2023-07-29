@@ -77,6 +77,30 @@ powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -R
         )
 
 
+def test_create_refrigerator_without_reqs():
+    refrigerator.create_refrigerator(
+        script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=None,
+        python_version=python_version,
+    )
+
+    assert path.exists(path.join(target_dir, "script", "script.py"))
+    assert path.exists(path.join(target_dir, "downloaders", "download_python.ps1"))
+    assert path.exists(path.join(target_dir, "script.bat"))
+    assert not path.exists(path.join(target_dir, "script", "requirements.txt"))
+    assert not path.exists(path.join(target_dir, "downloaders", "download_pip.ps1"))
+    assert not path.exists(path.join(target_dir, "downloaders", "download_deps.ps1"))
+
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        assert (
+            f.read()
+            == r'''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version 3.8.5 -TargetDirectory "."
+"%~dp0/python-3.8.5-embed-amd64/python.exe" "script\script.py"'''
+        )
+
+
 def test_fill_refrigerator():
     refrigerator.create_refrigerator(
         script_path=script_path,
