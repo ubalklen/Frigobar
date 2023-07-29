@@ -1,15 +1,13 @@
 # A script to download the embeddable Python of a given version
 # Also configures the embeddable Python to allow pip (it's not allowed by default)
-# Usage: .\download_python.ps1 -Version <Version> [-TargetDirectory <TargetDirectory>] [-UseProxy <UseProxy>]
+# Usage: .\download_python.ps1 -Version <Version> [-TargetDirectory <TargetDirectory>]
 # Example: .\download_python.ps1 3.8.0 -TargetDirectory C:\Python\3.8.0
 
 param(
     [Parameter(Mandatory=$true)]
     [string]$Version,
     [Parameter()]
-    [string]$TargetDirectory=(Get-Location).Path,
-    [Parameter()]
-    [bool]$UseProxy=$false
+    [string]$TargetDirectory=(Get-Location).Path
 )
 $PythonDirName = "python-$Version-embed-amd64"
 $PythonDir = "$TargetDirectory\$PythonDirName"
@@ -23,11 +21,14 @@ if (Test-Path $PythonExe) {
 }
 
 Write-Host "Downloading Python $Version"
-if ($UseProxy) {
-    $ProxyUrl = ([System.Net.WebRequest]::GetSystemWebproxy()).GetProxy($PythonUrl)
-    Invoke-WebRequest -Uri $PythonUrl -OutFile $PythonZip -Proxy $ProxyUrl -ProxyUseDefaultCredentials
+# Checking if there is a proxy
+$Proxy = [System.Net.WebRequest]::GetSystemWebproxy()
+$ProxyBypassed = $Proxy.IsBypassed($PythonUrl)
+if ($ProxyBypassed){
+    Invoke-WebRequest -Uri $PythonUrl -OutFile $PythonZip
 } else {
-    Invoke-WebRequest -Uri $PythonUrl -OutFile $PythonZip 
+    $ProxyUrl = $Proxy.GetProxy($PythonUrl)
+    Invoke-WebRequest -Uri $PythonUrl -OutFile $PythonZip -Proxy $ProxyUrl -ProxyUseDefaultCredentials
 }
 
 Write-Host "Extracting Python $version"

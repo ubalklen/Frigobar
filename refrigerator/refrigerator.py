@@ -3,9 +3,11 @@ import os
 import shutil
 from subprocess import Popen
 
-BAT_TEMPLATE = '''powershell . '%~dp0/downloaders/download_python.ps1' -Version {python_version} -TargetDirectory '{target_directory}' -UseProxy {use_proxy}
-powershell . '%~dp0/downloaders/download_pip.ps1' -TargetDirectory '{python_directory}' -UseProxy {use_proxy}
-powershell . '%~dp0/downloaders/download_deps.ps1' -RequirementsFile '{requirements_file}' -PipPath '{pip_path}' -UseProxy {use_proxy}
+BAT_TEMPLATE = '''powershell . '%~dp0/downloaders/download_python.ps1' -Version {python_version} -TargetDirectory '{target_directory}'
+powershell . '%~dp0/downloaders/download_pip.ps1' -TargetDirectory '{python_directory}'
+powershell . '%~dp0/downloaders/download_deps.ps1' -RequirementsFile '{requirements_file}' -PipPath '{pip_path}'
+"%~dp0/python-{python_version}-embed-amd64/python.exe" "{script_path}"'''
+BAT_TEMPLATE_NO_REQ = '''powershell . '%~dp0/downloaders/download_python.ps1' -Version {python_version} -TargetDirectory '{target_directory}'
 "%~dp0/python-{python_version}-embed-amd64/python.exe" "{script_path}"'''
 
 

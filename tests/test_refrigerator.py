@@ -12,7 +12,6 @@ downloaders_dir = path.join(path.dirname(test_dir), "refrigerator", "downloaders
 script_path = path.join(test_dir, "script_folder", "script.py")
 requirements_file = path.join(test_dir, "script_folder", "requirements.txt")
 python_version = "3.8.5"
-use_proxy = True  # TODO: check when proxy is needed
 
 
 @pytest.fixture(autouse=True)
@@ -64,7 +63,6 @@ def test_fill_refrigerator():
         target_directory=target_dir,
         requirements_file=requirements_file,
         python_version=python_version,
-        use_proxy=use_proxy,
     )
     refrigerator.fill_refrigerator(refrigerator_path=target_dir)
     assert path.exists(path.join(target_dir, f"python-{python_version}-embed-amd64"))
