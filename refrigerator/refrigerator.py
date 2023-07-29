@@ -3,12 +3,14 @@ import os
 import shutil
 from subprocess import Popen
 
-BAT_TEMPLATE = '''powershell . '%~dp0/downloaders/download_python.ps1' -Version {python_version} -TargetDirectory '{rel_target_directory}'
-powershell . '%~dp0/downloaders/download_pip.ps1' -TargetDirectory '{rel_python_directory}'
-powershell . '%~dp0/downloaders/download_deps.ps1' -RequirementsFile '{rel_requirements_file}' -PipPath '{rel_pip_path}'
+BAT_TEMPLATE = '''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version {python_version} -TargetDirectory "{rel_target_directory}"
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_pip.ps1" -TargetDirectory "{rel_python_directory}"
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -RequirementsFile "{rel_requirements_file}" -PipPath "{rel_pip_path}"
 "%~dp0/python-{python_version}-embed-amd64/python.exe" "{rel_script_path}"'''
-BAT_TEMPLATE_NO_REQ = '''powershell . '%~dp0/downloaders/download_python.ps1' -Version {python_version} -TargetDirectory '{rel_target_directory}'
-"%~dp0/python-{python_version}-embed-amd64/python.exe" "{rel_script_path}"'''
+BAT_TEMPLATE_NO_REQ = '''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version {python_version} -TargetDirectory "{rel_target_directory}"
+"%~dp0python-{python_version}-embed-amd64/python.exe" "{rel_script_path}"'''
 
 
 def create_refrigerator(

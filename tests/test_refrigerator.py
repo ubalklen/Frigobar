@@ -36,7 +36,15 @@ def test_create_simple_refrigerator():
     assert path.exists(path.join(target_dir, "downloaders", "download_deps.ps1"))
     assert path.exists(path.join(target_dir, "script.bat"))
 
-    # TODO: check bat file content
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        assert (
+            f.read()
+            == r'''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version 3.8.5 -TargetDirectory "."
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_pip.ps1" -TargetDirectory "python-3.8.5-embed-amd64"
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -RequirementsFile "script\requirements.txt" -PipPath "python-3.8.5-embed-amd64\Scripts\pip.exe"
+"%~dp0/python-3.8.5-embed-amd64/python.exe" "script\script.py"'''
+        )
 
 
 def test_create_refrigerator_with_folder():
@@ -58,7 +66,15 @@ def test_create_refrigerator_with_folder():
     assert path.exists(path.join(target_dir, "downloaders", "download_deps.ps1"))
     assert path.exists(path.join(target_dir, "script.bat"))
 
-    # TODO: check bat file content
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        assert (
+            f.read()
+            == r'''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version 3.8.5 -TargetDirectory "."
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_pip.ps1" -TargetDirectory "python-3.8.5-embed-amd64"
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -RequirementsFile "script\requirements.txt" -PipPath "python-3.8.5-embed-amd64\Scripts\pip.exe"
+"%~dp0/python-3.8.5-embed-amd64/python.exe" "script\script.py"'''
+        )
 
 
 def test_fill_refrigerator():
