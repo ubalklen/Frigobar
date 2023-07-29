@@ -3,12 +3,12 @@ import os
 import shutil
 from subprocess import Popen
 
-BAT_TEMPLATE = '''powershell . '%~dp0/downloaders/download_python.ps1' -Version {python_version} -TargetDirectory '{target_directory}'
-powershell . '%~dp0/downloaders/download_pip.ps1' -TargetDirectory '{python_directory}'
-powershell . '%~dp0/downloaders/download_deps.ps1' -RequirementsFile '{requirements_file}' -PipPath '{pip_path}'
-"%~dp0/python-{python_version}-embed-amd64/python.exe" "{script_path}"'''
-BAT_TEMPLATE_NO_REQ = '''powershell . '%~dp0/downloaders/download_python.ps1' -Version {python_version} -TargetDirectory '{target_directory}'
-"%~dp0/python-{python_version}-embed-amd64/python.exe" "{script_path}"'''
+BAT_TEMPLATE = '''powershell . '%~dp0/downloaders/download_python.ps1' -Version {python_version} -TargetDirectory '{rel_target_directory}'
+powershell . '%~dp0/downloaders/download_pip.ps1' -TargetDirectory '{rel_python_directory}'
+powershell . '%~dp0/downloaders/download_deps.ps1' -RequirementsFile '{rel_requirements_file}' -PipPath '{rel_pip_path}'
+"%~dp0/python-{python_version}-embed-amd64/python.exe" "{rel_script_path}"'''
+BAT_TEMPLATE_NO_REQ = '''powershell . '%~dp0/downloaders/download_python.ps1' -Version {python_version} -TargetDirectory '{rel_target_directory}'
+"%~dp0/python-{python_version}-embed-amd64/python.exe" "{rel_script_path}"'''
 
 
 def create_refrigerator(
@@ -69,6 +69,17 @@ def create_refrigerator(
         shutil.copy(script, downloaders_dir)
 
     # Create bat file
+    rel_target_directory = os.path.relpath(target_directory, target_directory)
+    rel_python_directory = os.path.relpath(python_directory, target_directory)
+    rel_requirements_file = os.path.relpath(
+        os.path.join(script_dir, os.path.basename(requirements_file)), target_directory
+    )
+    rel_pip_path = os.path.relpath(
+        os.path.join(python_directory, "Scripts", "pip.exe"), target_directory
+    )
+    rel_script_path = os.path.relpath(
+        os.path.join(script_dir, os.path.basename(script_path)), target_directory
+    )
     script_basename = os.path.splitext(os.path.basename(script_path))[0]
     bat_file = os.path.join(target_directory, f"{script_basename}.bat")
     with open(bat_file, "w") as f:
@@ -76,22 +87,20 @@ def create_refrigerator(
             f.write(
                 BAT_TEMPLATE.format(
                     python_version=python_version,
-                    target_directory=target_directory,
-                    python_directory=python_directory,
-                    requirements_file=os.path.join(
-                        script_dir, os.path.basename(requirements_file)
-                    ),
-                    pip_path=os.path.join(python_directory, "Scripts", "pip.exe"),
-                    script_path=os.path.join(script_dir, os.path.basename(script_path)),
+                    rel_target_directory=rel_target_directory,
+                    rel_python_directory=rel_python_directory,
+                    rel_requirements_file=rel_requirements_file,
+                    rel_pip_path=rel_pip_path,
+                    rel_script_path=rel_script_path,
                 )
             )
         else:
             f.write(
                 BAT_TEMPLATE_NO_REQ.format(
                     python_version=python_version,
-                    target_directory=target_directory,
-                    python_directory=python_directory,
-                    script_path=os.path.join(script_dir, os.path.basename(script_path)),
+                    rel_target_directory=rel_target_directory,
+                    rel_python_directory=rel_python_directory,
+                    rel_script_path=rel_script_path,
                 )
             )
 

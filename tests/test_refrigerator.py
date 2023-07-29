@@ -36,6 +36,8 @@ def test_create_simple_refrigerator():
     assert path.exists(path.join(target_dir, "downloaders", "download_deps.ps1"))
     assert path.exists(path.join(target_dir, "script.bat"))
 
+    # TODO: check bat file content
+
 
 def test_create_refrigerator_with_folder():
     refrigerator.create_refrigerator(
@@ -55,6 +57,8 @@ def test_create_refrigerator_with_folder():
     assert path.exists(path.join(target_dir, "downloaders", "download_pip.ps1"))
     assert path.exists(path.join(target_dir, "downloaders", "download_deps.ps1"))
     assert path.exists(path.join(target_dir, "script.bat"))
+
+    # TODO: check bat file content
 
 
 def test_fill_refrigerator():
