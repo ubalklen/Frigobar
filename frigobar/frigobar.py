@@ -46,7 +46,16 @@ def create_frigobar(
     if not copy_directory:
         shutil.copy(script_path, script_dir)
     else:
-        shutil.copytree(os.path.dirname(script_path), script_dir, dirs_exist_ok=True)
+
+        def ignore_target_dir(dir, contents):
+            return [c for c in contents if os.path.join(dir, c) == target_directory]
+
+        shutil.copytree(
+            os.path.dirname(script_path),
+            script_dir,
+            dirs_exist_ok=True,
+            ignore=ignore_target_dir,
+        )
 
     # Add a copy of the requirements file to frigobar
     if requirements_file:
