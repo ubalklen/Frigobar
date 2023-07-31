@@ -1,3 +1,4 @@
+import os
 import shutil
 from os import path
 
@@ -20,9 +21,37 @@ def delete_test_frigobar():
     shutil.rmtree(target_dir, ignore_errors=True)
 
 
-def test_create_simple_frigobar():
+def test_create_frigobar_abs_script_path():
     frigobar.create_frigobar(
         script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=requirements_file,
+        python_version=python_version,
+    )
+
+    assert path.exists(path.join(target_dir, "script", "script.py"))
+    assert path.exists(path.join(target_dir, "script", "requirements.txt"))
+    assert path.exists(path.join(target_dir, "downloaders", "download_python.ps1"))
+    assert path.exists(path.join(target_dir, "downloaders", "download_pip.ps1"))
+    assert path.exists(path.join(target_dir, "downloaders", "download_deps.ps1"))
+    assert path.exists(path.join(target_dir, "script.bat"))
+
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        assert (
+            f.read()
+            == r'''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version 3.8.5 -TargetDirectory "."
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_pip.ps1" -TargetDirectory "python-3.8.5-embed-amd64"
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -RequirementsFile "script\requirements.txt" -PipPath "python-3.8.5-embed-amd64\Scripts\pip.exe"
+"%~dp0/python-3.8.5-embed-amd64/python.exe" "script\script.py"'''
+        )
+
+
+def test_create_frigobar_rel_script_path():
+    os.chdir(os.path.dirname(script_path))
+    script_rel_path = os.path.basename(script_path)
+    frigobar.create_frigobar(
+        script_path=script_rel_path,
         target_directory=target_dir,
         requirements_file=requirements_file,
         python_version=python_version,
@@ -49,6 +78,38 @@ powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -R
 def test_create_frigobar_with_folder():
     frigobar.create_frigobar(
         script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=requirements_file,
+        python_version=python_version,
+        copy_directory=True,
+    )
+
+    assert path.exists(path.join(target_dir, "script", "script.py"))
+    assert path.exists(path.join(target_dir, "script", "another_script.py"))
+    assert path.exists(path.join(target_dir, "script", "data"))
+    assert path.exists(path.join(target_dir, "script", "data", "data"))
+    assert path.exists(path.join(target_dir, "script", "requirements.txt"))
+    assert path.exists(path.join(target_dir, "downloaders", "download_python.ps1"))
+    assert path.exists(path.join(target_dir, "downloaders", "download_pip.ps1"))
+    assert path.exists(path.join(target_dir, "downloaders", "download_deps.ps1"))
+    assert path.exists(path.join(target_dir, "script.bat"))
+
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        assert (
+            f.read()
+            == r'''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version 3.8.5 -TargetDirectory "."
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_pip.ps1" -TargetDirectory "python-3.8.5-embed-amd64"
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -RequirementsFile "script\requirements.txt" -PipPath "python-3.8.5-embed-amd64\Scripts\pip.exe"
+"%~dp0/python-3.8.5-embed-amd64/python.exe" "script\script.py"'''
+        )
+
+
+def test_create_frigobar_with_folder_and_rel_script_path():
+    os.chdir(os.path.dirname(script_path))
+    script_rel_path = os.path.basename(script_path)
+    frigobar.create_frigobar(
+        script_path=script_rel_path,
         target_directory=target_dir,
         requirements_file=requirements_file,
         python_version=python_version,

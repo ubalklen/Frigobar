@@ -20,19 +20,21 @@ def create_frigobar(
     requirements_file: str = None,
     copy_directory: bool = False,
 ):
+    script_path = os.path.abspath(script_path)
     if not os.path.exists(target_directory):
         os.mkdir(target_directory)
     elif not os.path.isdir(target_directory):
         raise Exception("Target directory must be a directory")
     elif os.listdir(target_directory):
         raise Exception("Target directory must be empty")
-    python_directory = os.path.join(
-        target_directory, f"python-{python_version}-embed-amd64"
-    )
-
     if not os.path.exists(script_path) or not os.path.isfile(script_path):
         raise Exception(f"Missing script: {script_path}")
 
+    target_directory = os.path.abspath(target_directory)
+
+    requirements_file = (
+        os.path.abspath(requirements_file) if requirements_file else None
+    )
     if requirements_file and (
         not os.path.exists(requirements_file) or not os.path.isfile(requirements_file)
     ):
@@ -71,6 +73,9 @@ def create_frigobar(
         shutil.copy(script, downloaders_dir)
 
     # Create bat file
+    python_directory = os.path.join(
+        target_directory, f"python-{python_version}-embed-amd64"
+    )
     rel_target_directory = os.path.relpath(target_directory, target_directory)
     rel_python_directory = os.path.relpath(python_directory, target_directory)
     rel_pip_path = os.path.relpath(
