@@ -34,18 +34,25 @@ if ($ProxyBypassed){
 Write-Host "Extracting Python $version"
 Expand-Archive -Path $PythonZip -DestinationPath "$PythonDir"
 
-# Modify _pht file to allow pip in embedabble Python
-# See https://stackoverflow.com/a/48906746
+# Modify _pht file to add custom configurations to embedabble Python
 $PthFile = Get-ChildItem -Path $PythonDir -Filter "python*_pth" | Select-Object -Last 1
 
 if ($PthFile) {
     # Read the content of the file into an array
     $Lines = Get-Content $PthFile.FullName
 
+    # Insert the script path at the beginning of the content
+    # This allows embeddable Python to find modules in the script folder
+    # See https://stackoverflow.com/a/61976910
+    $ScriptPath = "..\script"
+    $Lines = @($ScriptPath) + $Lines
+
     # Find the last line of the file
     $LastLineIndex = $Lines.Count - 1
 
     # Uncomment the last line by removing the leading '#'
+    # This allows embeddable Python to use pip
+    # See https://stackoverflow.com/a/48906746
     $Lines[$LastLineIndex] = $Lines[$LastLineIndex] -replace '^#', ''
 
     # Write the updated content back to the file
