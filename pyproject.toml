@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "frigobar"
-version = "1"
+version = "2"
 description = "Distribute Python apps to Windows machines without freezing them."
 authors = [
     {name="ubalklen", email="42127323+ubalklen@users.noreply.github.com"},
