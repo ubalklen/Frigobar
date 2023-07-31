@@ -14,7 +14,25 @@ pip install frigobar
 
 ## Options
 ```
-frigobar --help
+> frigobar --help
+usage: frigobar [-h] [-r REQUIREMENTS_FILE] [-p PYTHON_VERSION] [--copy-directory] script-path [target-directory]
+
+Distribute Python apps to Windows machines without freezing them. The resulting distribution will be put in a folder that   
+can be copied to any Windows machine. Users should run "<script_name>.bat" to run the script. All the dependencies,
+including an embeddable version of Python, will be downloaded on the first run.
+
+positional arguments:
+  script-path           Path to the script to distribute.
+  target-directory      Folder where the distribution will be put. Defaults to 'frigobar'.
+
+options:
+  -h, --help            show this help message and exit
+  -r REQUIREMENTS_FILE, --requirements-file REQUIREMENTS_FILE
+                        Path to a requirements file that lists the dependencies of the script.
+  -p PYTHON_VERSION, --python-version PYTHON_VERSION, --python PYTHON_VERSION
+                        Python version, in X.Y.Z format, that the distribution should use.The version must be available as  
+                        an embeddable package on https://www.python.org/downloads/windows/. Defaults to 3.11.4.
+  --copy-directory      Copy the contents of the script directory to the distribution.
 ```
 
 ## Rationale
