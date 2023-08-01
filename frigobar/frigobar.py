@@ -3,14 +3,14 @@ import os
 import shutil
 from subprocess import Popen
 
-BAT_TEMPLATE = '''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
-powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version {python_version} -TargetDirectory "{rel_target_directory}"
-powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_pip.ps1" -TargetDirectory "{rel_python_directory}"
-powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -RequirementsFile "{rel_requirements_file}" -PipPath "{rel_pip_path}"
-"%~dp0/python-{python_version}-embed-amd64/python.exe" "{rel_script_path}"'''
-BAT_TEMPLATE_NO_REQ = '''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
-powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version {python_version} -TargetDirectory "{rel_target_directory}"
-"%~dp0/python-{python_version}-embed-amd64/python.exe" "{rel_script_path}"'''
+unblock_cmd = "powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'"
+download_python_cmd = 'powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version {python_version} -TargetDirectory "{rel_target_directory}"'
+download_pip_cmd = 'powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_pip.ps1" -TargetDirectory "{rel_python_directory}"'
+download_deps_cmd = 'powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_deps.ps1" -RequirementsFile "{rel_requirements_file}" -PipPath "{rel_pip_path}"'
+download_tkinter_cmd = 'powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_tkinter.ps1" -TargetDirectory "{rel_target_directory}" -PythonVersion {python_version} -MoveFiles -PythonDirectory "{rel_python_directory}"'
+run_script_cmd = (
+    '"%~dp0/python-{python_version}-embed-amd64/python.exe" "{rel_script_path}"'
+)
 
 
 def create_frigobar(
@@ -19,6 +19,7 @@ def create_frigobar(
     python_version: str = "3.11.4",
     requirements_file: str = None,
     copy_directory: bool = False,
+    tkinter: bool = False,
 ):
     script_path = os.path.abspath(script_path)
     if not os.path.exists(target_directory):
@@ -63,17 +64,16 @@ def create_frigobar(
 
     # Add a copy of the downloaders to frigobar
     downloaders_dir = os.path.join(os.path.dirname(__file__), "downloaders")
-    downloader_scripts = (
-        [
-            os.path.join(downloaders_dir, "download_python.ps1"),
+    downloader_scripts = [os.path.join(downloaders_dir, "download_python.ps1")]
+    if requirements_file:
+        downloader_scripts += [
             os.path.join(downloaders_dir, "download_pip.ps1"),
             os.path.join(downloaders_dir, "download_deps.ps1"),
         ]
-        if requirements_file
-        else [
-            os.path.join(downloaders_dir, "download_python.ps1"),
+    if tkinter:
+        downloader_scripts += [
+            os.path.join(downloaders_dir, "download_tkinter.ps1"),
         ]
-    )
     downloaders_dir = os.path.join(target_directory, "downloaders")
     os.mkdir(downloaders_dir)
     for script in downloader_scripts:
@@ -98,29 +98,36 @@ def create_frigobar(
             os.path.join(script_dir, os.path.basename(requirements_file)),
             target_directory,
         )
+    else:
+        rel_requirements_file = ""
     script_basename = os.path.splitext(os.path.basename(script_path))[0]
     bat_file = os.path.join(target_directory, f"{script_basename}.bat")
     with open(bat_file, "w") as f:
+        template_list = [unblock_cmd, download_python_cmd]
         if requirements_file:
-            f.write(
-                BAT_TEMPLATE.format(
-                    python_version=python_version,
-                    rel_target_directory=rel_target_directory,
-                    rel_python_directory=rel_python_directory,
-                    rel_requirements_file=rel_requirements_file,
-                    rel_pip_path=rel_pip_path,
-                    rel_script_path=rel_script_path,
-                )
+            template_list.append(download_pip_cmd)
+            template_list.append(download_deps_cmd)
+        if tkinter:
+            template_list.append(download_tkinter_cmd)
+        template_list.append(run_script_cmd)
+        template = "\n".join(template_list)
+        f.write(
+            template.format(
+                python_version=python_version,
+                rel_target_directory=rel_target_directory,
+                rel_python_directory=rel_python_directory,
+                rel_requirements_file=rel_requirements_file,
+                rel_pip_path=rel_pip_path,
+                rel_script_path=rel_script_path,
             )
-        else:
-            f.write(
-                BAT_TEMPLATE_NO_REQ.format(
-                    python_version=python_version,
-                    rel_target_directory=rel_target_directory,
-                    rel_python_directory=rel_python_directory,
-                    rel_script_path=rel_script_path,
-                )
-            )
+        )
+
+    # Add _tkinter.pyd to frigobar
+    if tkinter:
+        tkinter_pyd_path = os.path.join(
+            os.path.dirname(__file__), "_tkinter", "_tkinter.pyd"
+        )
+        shutil.copy(tkinter_pyd_path, target_directory)
 
 
 def fill_frigobar(frigobar_path: str):

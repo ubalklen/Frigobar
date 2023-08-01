@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+!frigobar/_tkinter/_tkinter.pyd
 
 # C extensions
 *.so

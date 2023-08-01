@@ -10,6 +10,7 @@ def create_frigobar(args):
         requirements_file=args.requirements_file,
         python_version=args.python_version,
         copy_directory=args.copy_directory,
+        tkinter=args.tkinter,
     )
 
 
@@ -53,6 +54,11 @@ def main():
         "--copy-directory",
         action="store_true",
         help="Copy the contents of the script directory to the distribution.",
+    )
+    parser.add_argument(
+        "--tkinter",
+        action="store_true",
+        help="Include Tkinter in the distribution.",
     )
     args = parser.parse_args()
     create_frigobar(args)

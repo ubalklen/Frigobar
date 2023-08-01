@@ -17,7 +17,6 @@ if (Test-Path $PipExe) {
 }
 
 Write-Host "Downloading get-pip.py"
-# Checking if there is a proxy
 $Proxy = [System.Net.WebRequest]::GetSystemWebproxy()
 $ProxyBypassed = $Proxy.IsBypassed($PipUrl)
 if ($ProxyBypassed){

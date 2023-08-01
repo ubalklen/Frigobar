@@ -21,7 +21,6 @@ if (Test-Path $PythonExe) {
 }
 
 Write-Host "Downloading Python $Version"
-# Checking if there is a proxy
 $Proxy = [System.Net.WebRequest]::GetSystemWebproxy()
 $ProxyBypassed = $Proxy.IsBypassed($PythonUrl)
 if ($ProxyBypassed){

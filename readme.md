@@ -33,6 +33,7 @@ options:
                         Python version, in X.Y.Z format, that the distribution should use.The version must be available as  
                         an embeddable package on https://www.python.org/downloads/windows/. Defaults to 3.11.4.
   --copy-directory      Copy the contents of the script directory to the distribution.
+  --tkinter             Include Tkinter in the distribution.
 ```
 
 ## Rationale

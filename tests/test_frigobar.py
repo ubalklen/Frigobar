@@ -196,17 +196,41 @@ def test_create_frigobar_without_reqs():
     )
 
     assert path.exists(path.join(target_dir, "script", "script.py"))
-    assert path.exists(path.join(target_dir, "downloaders", "download_python.ps1"))
     assert path.exists(path.join(target_dir, "script.bat"))
     assert not path.exists(path.join(target_dir, "script", "requirements.txt"))
     assert not path.exists(path.join(target_dir, "downloaders", "download_pip.ps1"))
     assert not path.exists(path.join(target_dir, "downloaders", "download_deps.ps1"))
+    assert not path.exists(path.join(target_dir, "downloaders", "download_tkinter.ps1"))
 
     with open(path.join(target_dir, "script.bat"), "r") as f:
         assert (
             f.read()
             == r'''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
 powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version 3.8.5 -TargetDirectory "."
+"%~dp0/python-3.8.5-embed-amd64/python.exe" "script\script.py"'''
+        )
+
+
+def test_create_frigobar_with_tkinter():
+    frigobar.create_frigobar(
+        script_path=script_path,
+        target_directory=target_dir,
+        python_version=python_version,
+        tkinter=True,
+    )
+
+    assert path.exists(path.join(target_dir, "script", "script.py"))
+    assert path.exists(path.join(target_dir, "downloaders", "download_python.ps1"))
+    assert path.exists(path.join(target_dir, "downloaders", "download_tkinter.ps1"))
+    assert path.exists(path.join(target_dir, "script.bat"))
+    assert not path.exists(path.join(target_dir, "python-3.8.5-amd64.zip"))
+
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        assert (
+            f.read()
+            == r'''powershell Unblock-File -Path '%~dp0downloaders\download_python.ps1'
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_python.ps1" -Version 3.8.5 -TargetDirectory "."
+powershell -ExecutionPolicy Bypass -File "%~dp0downloaders\download_tkinter.ps1" -TargetDirectory "." -PythonVersion 3.8.5 -MoveFiles -PythonDirectory "python-3.8.5-embed-amd64"
 "%~dp0/python-3.8.5-embed-amd64/python.exe" "script\script.py"'''
         )
 
