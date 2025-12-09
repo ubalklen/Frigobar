@@ -14,7 +14,7 @@ def create_frigobar(
     target_directory: str = "frigobar",
     python_version: str = "3.13.11",
     timestamp: str = "20251205",
-    requirements_file: str = None,
+    requirements_file: str = "requirements.txt",
     copy_directory: bool = False,
 ):
     script_path = os.path.abspath(script_path)

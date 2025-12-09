@@ -37,7 +37,11 @@ def main():
     parser.add_argument(
         "-r",
         "--requirements-file",
-        help="Path to a requirements file that lists the dependencies of the script.",
+        default="requirements.txt",
+        help=(
+            "Path to a requirements file that lists the dependencies of the script. Defaults to"
+            "'requirements.txt'."
+        ),
     )
     parser.add_argument(
         "-p",
