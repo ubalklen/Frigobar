@@ -1,68 +1,73 @@
-# A script to download the embeddable Python of a given version
-# Also configures the embeddable Python to allow pip (it's not allowed by default)
-# Usage: .\download_python.ps1 -Version <Version> [-TargetDirectory <TargetDirectory>]
-# Example: .\download_python.ps1 3.8.0 -TargetDirectory C:\Python\3.8.0
+# A script to download Python from python-build-standalone
+# Usage: .\download_python.ps1 [-Version <Version>] [-Timestamp <Timestamp>] [-Configuration <Configuration>] [-Flavor <Flavor>] [-TargetDirectory <TargetDirectory>]
+# Example: .\download_python.ps1 -Version 3.12.0
+# Example: .\download_python.ps1 -Version 3.10.19 -Timestamp 20251205 -Configuration x86_64-pc-windows-msvc
 
 param(
-    [Parameter(Mandatory=$true)]
-    [string]$Version,
+    [Parameter()]
+    [string]$Version="3.13.11",
+    [Parameter()]
+    [string]$Timestamp="20251205",
+    [Parameter()]
+    [string]$Configuration="x86_64-pc-windows-msvc",
+    [Parameter()]
+    [string]$Flavor="install_only_stripped",
     [Parameter()]
     [string]$TargetDirectory=(Get-Location).Path
 )
-$PythonDirName = "python-$Version-embed-amd64"
-$PythonDir = "$TargetDirectory\$PythonDirName"
-$PythonUrl = "https://www.python.org/ftp/python/$Version/$PythonDirName.zip"
-$PythonZip = "$TargetDirectory\$PythonDirName.zip"
-$PythonExe = "$PythonDirName\python.exe"
+
+# Build the filename and URL
+# Format: cpython-{version}+{timestamp}-{configuration}-{flavor}.tar.{ext}
+$FileName = "cpython-$Version+$Timestamp-$Configuration-$Flavor"
+
+# Determine file extension (install_only_stripped uses .tar.gz, others typically use .tar.zst)
+if ($Flavor -eq "install_only_stripped") {
+    $FileExt = "tar.gz"
+} else {
+    $FileExt = "tar.zst"
+}
+
+$ArchiveFile = "$FileName.$FileExt"
+$ArchivePath = "$TargetDirectory\$ArchiveFile"
+$PythonUrl = "https://github.com/astral-sh/python-build-standalone/releases/download/$Timestamp/$ArchiveFile"
+$ExtractedDir = "$TargetDirectory\python"
+$PythonExe = "$ExtractedDir\python.exe"
 
 if (Test-Path $PythonExe) {
-    Write-Host "Python $version already downloaded"
+    Write-Host "Python $Version already downloaded"
     exit 0
 }
 
-Write-Host "Downloading Python $Version"
-$Proxy = [System.Net.WebRequest]::GetSystemWebproxy()
-$ProxyBypassed = $Proxy.IsBypassed($PythonUrl)
-if ($ProxyBypassed){
-    Invoke-WebRequest -Uri $PythonUrl -OutFile $PythonZip
-} else {
-    $ProxyUrl = $Proxy.GetProxy($PythonUrl)
-    Invoke-WebRequest -Uri $PythonUrl -OutFile $PythonZip -Proxy $ProxyUrl -ProxyUseDefaultCredentials
+Write-Host "Downloading Python $Version from python-build-standalone"
+Write-Host "URL: $PythonUrl"
+
+try {
+    $Proxy = [System.Net.WebRequest]::GetSystemWebproxy()
+    $ProxyBypassed = $Proxy.IsBypassed($PythonUrl)
+    if ($ProxyBypassed){
+        Invoke-WebRequest -Uri $PythonUrl -OutFile $ArchivePath -ErrorAction Stop
+    } else {
+        $ProxyUrl = $Proxy.GetProxy($PythonUrl)
+        Invoke-WebRequest -Uri $PythonUrl -OutFile $ArchivePath -Proxy $ProxyUrl -ProxyUseDefaultCredentials -ErrorAction Stop
+    }
+} catch {
+    Write-Host "Error when downloading $PythonUrl. Please, make sure it is listed in https://github.com/astral-sh/python-build-standalone/releases" -ForegroundColor Red
+    exit 1
 }
 
-Write-Host "Extracting Python $version"
-Expand-Archive -Path $PythonZip -DestinationPath "$PythonDir"
+Write-Host "Extracting Python $Version"
 
-# Modify _pht file to add custom configurations to embedabble Python
-$PthFile = Get-ChildItem -Path $PythonDir -Filter "python*_pth" | Select-Object -Last 1
-
-if ($PthFile) {
-    # Read the content of the file into an array
-    $Lines = Get-Content $PthFile.FullName
-
-    # Insert the script path at the beginning of the content
-    # This allows embeddable Python to find modules in the script folder
-    # See https://stackoverflow.com/a/61976910
-    $ScriptPath = "..\script"
-    $Lines = @($ScriptPath) + $Lines
-
-    # Find the last line of the file
-    $LastLineIndex = $Lines.Count - 1
-
-    # Uncomment the last line by removing the leading '#'
-    # This allows embeddable Python to use pip
-    # See https://stackoverflow.com/a/48906746
-    $Lines[$LastLineIndex] = $Lines[$LastLineIndex] -replace '^#', ''
-
-    # Write the updated content back to the file
-    $Lines | Set-Content $PthFile.FullName
-
-    Write-Host "Uncommented the last line in $($file.FullName)."
+# Extract tar.gz or tar.zst archive
+# First, we need to check if tar is available (Windows 10+ has native tar support)
+if (Get-Command tar -ErrorAction SilentlyContinue) {
+    # Use native tar command
+    tar -xf $ArchivePath -C $TargetDirectory
 } else {
-    Write-Host "No file found that matches the pattern (python*_pth)."
+    Write-Host "Error: tar command not found. Please install tar or use Windows 10 or later." -ForegroundColor Red
+    exit 1
 }
 
 Write-Host "Cleaning up"
-Remove-Item $PythonZip
+Remove-Item $ArchivePath
 
 Write-Host "Done"

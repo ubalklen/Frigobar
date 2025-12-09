@@ -9,8 +9,8 @@ def create_frigobar(args):
         target_directory=args.target_directory,
         requirements_file=args.requirements_file,
         python_version=args.python_version,
+        timestamp=args.timestamp,
         copy_directory=args.copy_directory,
-        tkinter=args.tkinter,
     )
 
 
@@ -20,7 +20,7 @@ def main():
             "Distribute Python apps to Windows machines without freezing them. The "
             "resulting distribution will be put in a folder that can be copied to any "
             'Windows machine. Users should run "<script_name>.bat" to run the script. '
-            "All the dependencies, including an embeddable version of Python, will be "
+            "All the dependencies, including a standalone build of Python, will be "
             "downloaded on the first run."
         )
     )
@@ -43,22 +43,27 @@ def main():
         "-p",
         "--python-version",
         "--python",
-        default="3.11.4",
+        default="3.13.11",
         help=(
-            "Python version, in X.Y.Z format, that the distribution should use."
-            "The version must be available as an embeddable package on "
-            "https://www.python.org/downloads/windows/. Defaults to 3.11.4."
+            "Python version, in X.Y.Z format, that the distribution should use. The version must "
+            "be available on https://github.com/astral-sh/python-build-standalone/releases. "
+            "Defaults to 3.13.11."
+        ),
+    )
+    parser.add_argument(
+        "-t",
+        "--timestamp",
+        default="20251205",
+        help=(
+            "Release timestamp (YYYYMMDD format) for the Python build. Check "
+            "https://github.com/astral-sh/python-build-standalone/releases for available dates. "
+            "Defaults to 20251205."
         ),
     )
     parser.add_argument(
         "--copy-directory",
         action="store_true",
         help="Copy the contents of the script directory to the distribution.",
-    )
-    parser.add_argument(
-        "--tkinter",
-        action="store_true",
-        help="Include Tkinter in the distribution.",
     )
     args = parser.parse_args()
     create_frigobar(args)
