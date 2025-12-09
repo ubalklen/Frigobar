@@ -15,12 +15,10 @@ pip install frigobar
 ## Options
 ```
 > frigobar --help
-usage: cli.py [-h] [-r REQUIREMENTS_FILE] [-p PYTHON_VERSION] [-t TIMESTAMP] [--copy-directory]
-              script-path [target-directory]
+usage: cli.py [-h] [-r REQUIREMENTS_FILE] [-p PYTHON_VERSION] [-t TIMESTAMP] [--copy-directory] script-path [target-directory]
 
-Distribute Python scripts to Windows machines without freezing them. The resulting distribution will be put in a folder
-that can be copied to any Windows machine. Users should run "<script_name>.bat" to run the script. All the dependencies,   
-including a standalone build of Python, will be downloaded on the first run.
+Distribute Python scripts to Windows machines without freezing them. The resulting distribution will be put in a folder that can be copied to any Windows machine. Users should run "<script_name>.bat" to run the
+script. All the dependencies, including a standalone build of Python, will be downloaded on the first run.
 
 positional arguments:
   script-path           Path to the script to distribute.
@@ -29,13 +27,11 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -r REQUIREMENTS_FILE, --requirements-file REQUIREMENTS_FILE
-                        Path to a requirements file that lists the dependencies of the script.
+                        Path to a requirements file that lists the dependencies of the script. Defaults to'requirements.txt'.
   -p PYTHON_VERSION, --python-version PYTHON_VERSION, --python PYTHON_VERSION
-                        Python version, in X.Y.Z format, that the distribution should use. The version must be available   
-                        on https://github.com/astral-sh/python-build-standalone/releases. Defaults to 3.13.11.
+                        Python version, in X.Y.Z format, that the distribution should use. The version must be available on https://github.com/astral-sh/python-build-standalone/releases. Defaults to 3.13.11.
   -t TIMESTAMP, --timestamp TIMESTAMP
-                        Release timestamp (YYYYMMDD format) for the Python build. Check https://github.com/astral-
-                        sh/python-build-standalone/releases for available dates. Defaults to 20251205.
+                        Release timestamp (YYYYMMDD format) for the Python build. Check https://github.com/astral-sh/python-build-standalone/releases for available dates. Defaults to 20251205.
   --copy-directory      Copy the contents of the script directory to the distribution.
 ```
 
