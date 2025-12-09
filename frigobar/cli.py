@@ -17,7 +17,7 @@ def create_frigobar(args):
 def main():
     parser = argparse.ArgumentParser(
         description=(
-            "Distribute Python apps to Windows machines without freezing them. The "
+            "Distribute Python scripts to Windows machines without freezing them. The "
             "resulting distribution will be put in a folder that can be copied to any "
             'Windows machine. Users should run "<script_name>.bat" to run the script. '
             "All the dependencies, including a standalone build of Python, will be "

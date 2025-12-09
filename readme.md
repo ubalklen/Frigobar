@@ -1,11 +1,11 @@
 # Frigobar 
-Distribute Python apps to Windows machines without freezing them.
+Distribute Python scripts to Windows machines without freezing them.
 
 ## Basic usage
 ```
-frigobar my_app.py
+frigobar my_script.py
 ```
-This will create a `frigobar` folder, with a `my_app.bat` file in it. Run it to run your app. And since you already opened it, grab a beer!
+This will create a `frigobar` folder, with a `my_script.bat` file in it. Run it to run your app.
 
 ## Installation
 ```
