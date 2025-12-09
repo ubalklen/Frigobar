@@ -12,8 +12,8 @@ authors = [
 readme = "readme.md"
 
 [project.urls]
-"Homepage" = "https://github.com/ubalklen/my_package"
-"Bug Tracker" = "https://github.com/ubalklen/my_package/issues"
+"Homepage" = "https://github.com/ubalklen/Frigobar"
+"Bug Tracker" = "https://github.com/ubalklen/Frigobar/issues"
 
 [project.scripts]
 frigobar = "frigobar.cli:main"
