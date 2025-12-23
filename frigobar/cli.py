@@ -9,7 +9,6 @@ def create_frigobar(args):
         target_directory=args.target_directory,
         requirements_file=args.requirements_file,
         python_version=args.python_version,
-        timestamp=args.timestamp,
         copy_directory=args.copy_directory,
     )
 
@@ -17,11 +16,10 @@ def create_frigobar(args):
 def main():
     parser = argparse.ArgumentParser(
         description=(
-            "Distribute Python scripts to Windows machines without freezing them. The "
-            "resulting distribution will be put in a folder that can be copied to any "
-            'Windows machine. Users should run "<script_name>.bat" to run the script. '
-            "All the dependencies, including a standalone build of Python, will be "
-            "downloaded on the first run."
+            "Distribute Python scripts to Windows machines without freezing them. The folder of "
+            "the resulting distribution can be copied to any Windows machine. Users should run "
+            '"<script_name>.bat" to run the script. All the dependencies, including Python, will '
+            "be downloaded and installed on the first run."
         )
     )
     parser.add_argument(
@@ -37,31 +35,22 @@ def main():
     parser.add_argument(
         "-r",
         "--requirements-file",
-        default="requirements.txt",
+        default=None,
         help=(
-            "Path to a requirements file that lists the dependencies of the script. Defaults to"
-            "'requirements.txt'."
+            "Path to a classical requirements file (usually called requirements.txt) that lists"
+            " the dependencies of the script. If not provided, dependencies must be declared in a "
+            "pyproject.toml file or inline."
         ),
     )
     parser.add_argument(
         "-p",
         "--python-version",
         "--python",
-        default="3.13.11",
+        default=None,
         help=(
-            "Python version, in X.Y.Z format, that the distribution should use. The version must "
-            "be available on https://github.com/astral-sh/python-build-standalone/releases. "
-            "Defaults to 3.13.11."
-        ),
-    )
-    parser.add_argument(
-        "-t",
-        "--timestamp",
-        default="20251205",
-        help=(
-            "Release timestamp (YYYYMMDD format) for the Python build. Check "
-            "https://github.com/astral-sh/python-build-standalone/releases for available dates. "
-            "Defaults to 20251205."
+            "Python version, in X.Y.Z format, that the distribution should use. Only works when "
+            "--requirements-file is specified. If not provided, the latest Python supported by the"
+            "final user's system will be used."
         ),
     )
     parser.add_argument(
@@ -70,6 +59,8 @@ def main():
         help="Copy the contents of the script directory to the distribution.",
     )
     args = parser.parse_args()
+    if args.python_version and not args.requirements_file:
+        parser.error("--python-version requires --requirements-file to be specified.")
     create_frigobar(args)
 
 
