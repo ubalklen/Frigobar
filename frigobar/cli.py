@@ -56,7 +56,7 @@ def main():
     parser.add_argument(
         "--copy-directory",
         action="store_true",
-        help="Copy the contents of the script directory to the distribution. Respects .gitignore patterns if present.",
+        help="Copy the contents of the script directory to the distribution. Respects .gitignore if present.",
     )
     args = parser.parse_args()
     if args.python_version and not args.requirements_file:
