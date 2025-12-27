@@ -1,0 +1,10 @@
+# Ignore specific files
+*.log
+*.tmp
+
+# Ignore specific directories
+__pycache__/
+.pytest_cache/
+
+# Ignore data directory
+data/
