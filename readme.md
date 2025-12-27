@@ -8,7 +8,6 @@ frigobar my_script.py
 This will create a `frigobar` folder, with a `my_script.bat` file in it. Run it to run your app.
 
 ## Advanced usage
-
 Frigobar supports two modes of dependency management:
 
 ### Modern dependencies (Recommended)
@@ -69,53 +68,8 @@ options:
                         Path to a classical requirements file (usually called requirements.txt) that lists the dependencies of the script. If not provided, dependencies must be declared in a pyproject.toml file or inline.
   -p PYTHON_VERSION, --python-version PYTHON_VERSION, --python PYTHON_VERSION
                         Python version, in X.Y.Z format, that the distribution should use. Only works when --requirements-file is specified. If not provided, the latest Python supported by the final user's system will be used.
-  --copy-directory      Copy the contents of the script directory to the distribution. Respects .gitignore patterns if present.
+  --copy-directory      Copy the contents of the script directory to the distribution. Respects .gitignore if present.
 ```
-
-## Copy Directory Feature
-
-The `--copy-directory` option copies all files from your script's directory into the distribution, which is useful when your application needs additional files like configuration files, data files, or other modules.
-
-**Usage:**
-```bash
-frigobar my_script.py --copy-directory
-```
-
-**Gitignore Support:**
-
-When using `--copy-directory`, Frigobar automatically respects `.gitignore` patterns if a `.gitignore` file exists in your script's directory. This means you can keep build artifacts, cache files, and other temporary files out of your distribution.
-
-**Example:**
-
-If your script directory contains:
-```
-my_project/
-├── my_script.py
-├── .gitignore
-├── config.json
-├── data.csv
-├── __pycache__/
-└── .venv/
-```
-
-And your `.gitignore` contains:
-```
-__pycache__/
-.venv/
-*.pyc
-```
-
-Running `frigobar my_script.py --copy-directory` will copy:
-- `my_script.py`
-- `.gitignore`
-- `config.json`
-- `data.csv`
-
-But will **not** copy:
-- `__pycache__/`
-- `.venv/`
-- Any `.pyc` files
-
 
 ## Rationale
 A common technique to distribute Python apps is to "freeze" them using tools like [PyInstaller](https://pyinstaller.org/) or [cx_Freeze](https://cx-freeze.readthedocs.io/). These freezers create a standalone executable that contains your app and all its dependencies. This is a workable solution, but it has two main drawbacks:
