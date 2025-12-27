@@ -77,7 +77,7 @@ def create_frigobar(
         gitignore_path = os.path.join(source_dir, ".gitignore")
         gitignore_spec = None
         if os.path.exists(gitignore_path):
-            with open(gitignore_path, 'r') as f:
+            with open(gitignore_path, 'r', encoding='utf-8') as f:
                 gitignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', f)
 
         def ignore_patterns(dir, contents):
