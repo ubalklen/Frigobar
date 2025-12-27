@@ -96,7 +96,8 @@ def test_create_frigobar_copy_script_dir():
 
     assert path.exists(path.join(target_dir, "script", "script.py"))
     assert path.exists(path.join(target_dir, "script", "another_script.py"))
-    assert path.exists(path.join(target_dir, "script", "data"))
+    # data directory is now ignored by .gitignore
+    assert not path.exists(path.join(target_dir, "script", "data"))
     assert path.exists(path.join(target_dir, "pyproject.toml"))
     assert path.exists(path.join(target_dir, "script.bat"))
 
@@ -125,3 +126,24 @@ def test_create_frigobar_python_version_without_requirements_raises():
     assert "python_version can only be used when requirements_file is specified" in str(
         excinfo.value
     )
+
+
+def test_create_frigobar_copy_directory_honors_gitignore():
+    """Test that --copy-directory honors .gitignore patterns"""
+    frigobar.create_frigobar(
+        script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=None,
+        python_version=None,
+        copy_directory=True,
+    )
+
+    # Files that should be copied
+    assert path.exists(path.join(target_dir, "script", "script.py"))
+    assert path.exists(path.join(target_dir, "script", "another_script.py"))
+    
+    # Directory that should be ignored according to .gitignore
+    assert not path.exists(path.join(target_dir, "script", "data"))
+    
+    # .gitignore itself should be copied
+    assert path.exists(path.join(target_dir, "script", ".gitignore"))

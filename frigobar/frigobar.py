@@ -2,6 +2,7 @@ import glob
 import os
 import shutil
 from subprocess import Popen
+import pathspec
 
 BATCH_TEMPLATE = """@echo off
 echo Verificando instalacao do uv...
@@ -70,15 +71,53 @@ def create_frigobar(
     if not copy_directory:
         shutil.copy(script_path, script_dir)
     else:
+        source_dir = os.path.dirname(script_path)
+        
+        # Load .gitignore patterns if the file exists
+        gitignore_path = os.path.join(source_dir, ".gitignore")
+        gitignore_spec = None
+        if os.path.exists(gitignore_path):
+            with open(gitignore_path, 'r', encoding='utf-8') as f:
+                gitignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', f)
 
-        def ignore_target_dir(dir, contents):
-            return [c for c in contents if os.path.join(dir, c) == target_directory]
+        def ignore_patterns(dir, contents):
+            # Always ignore the target directory
+            ignored = [c for c in contents if os.path.join(dir, c) == target_directory]
+            
+            # Apply .gitignore patterns if available
+            if gitignore_spec:
+                # Calculate relative path from source_dir
+                rel_dir = os.path.relpath(dir, source_dir)
+                if rel_dir == '.':
+                    rel_dir = ''
+                
+                for item in contents:
+                    if item in ignored:
+                        continue
+                    
+                    # Build the relative path for this item
+                    if rel_dir:
+                        item_path = os.path.join(rel_dir, item)
+                    else:
+                        item_path = item
+                    
+                    # Check if item is a directory (need to append / for directory patterns)
+                    full_item_path = os.path.join(dir, item)
+                    if os.path.isdir(full_item_path):
+                        # Check both with and without trailing slash
+                        if gitignore_spec.match_file(item_path) or gitignore_spec.match_file(item_path + '/'):
+                            ignored.append(item)
+                    else:
+                        if gitignore_spec.match_file(item_path):
+                            ignored.append(item)
+            
+            return ignored
 
         shutil.copytree(
-            os.path.dirname(script_path),
+            source_dir,
             script_dir,
             dirs_exist_ok=True,
-            ignore=ignore_target_dir,
+            ignore=ignore_patterns,
         )
 
     # Handle dependencies

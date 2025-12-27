@@ -8,7 +8,6 @@ frigobar my_script.py
 This will create a `frigobar` folder, with a `my_script.bat` file in it. Run it to run your app.
 
 ## Advanced usage
-
 Frigobar supports two modes of dependency management:
 
 ### Modern dependencies (Recommended)
@@ -69,7 +68,7 @@ options:
                         Path to a classical requirements file (usually called requirements.txt) that lists the dependencies of the script. If not provided, dependencies must be declared in a pyproject.toml file or inline.
   -p PYTHON_VERSION, --python-version PYTHON_VERSION, --python PYTHON_VERSION
                         Python version, in X.Y.Z format, that the distribution should use. Only works when --requirements-file is specified. If not provided, the latest Python supported by the final user's system will be used.
-  --copy-directory      Copy the contents of the script directory to the distribution.
+  --copy-directory      Copy the contents of the script directory to the distribution. Respects .gitignore if present.
 ```
 
 ## Rationale
