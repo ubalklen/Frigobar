@@ -10,6 +10,9 @@ authors = [
     {name="ubalklen", email="42127323+ubalklen@users.noreply.github.com"},
 ]
 readme = "readme.md"
+dependencies = [
+    "pathspec>=0.12.1",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/ubalklen/Frigobar"

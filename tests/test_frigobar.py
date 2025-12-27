@@ -101,6 +101,28 @@ def test_create_frigobar_copy_script_dir():
     assert path.exists(path.join(target_dir, "script.bat"))
 
 
+def test_create_frigobar_copy_script_dir_respects_gitignore():
+    frigobar.create_frigobar(
+        script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=None,
+        python_version=None,
+        copy_directory=True,
+    )
+
+    # Should copy non-ignored files
+    assert path.exists(path.join(target_dir, "script", "script.py"))
+    assert path.exists(path.join(target_dir, "script", "another_script.py"))
+    assert path.exists(path.join(target_dir, "script", "data"))
+    
+    # Should NOT copy ignored files and directories
+    assert not path.exists(path.join(target_dir, "script", "ignored_file.txt"))
+    assert not path.exists(path.join(target_dir, "script", "ignored_dir"))
+    
+    # Should copy .gitignore itself (it's not listed as ignored)
+    assert path.exists(path.join(target_dir, "script", ".gitignore"))
+
+
 def test_create_frigobar_target_dir_inside_script_dir(target_dir_inside_script_dir):
     frigobar.create_frigobar(
         script_path=script_path,

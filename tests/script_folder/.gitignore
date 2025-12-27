@@ -1,0 +1,6 @@
+# Test gitignore file
+*.pyc
+__pycache__/
+.env
+ignored_file.txt
+ignored_dir/

@@ -3,6 +3,8 @@ import os
 import shutil
 from subprocess import Popen
 
+import pathspec
+
 BATCH_TEMPLATE = """@echo off
 echo Verificando instalacao do uv...
 
@@ -70,15 +72,40 @@ def create_frigobar(
     if not copy_directory:
         shutil.copy(script_path, script_dir)
     else:
+        # Load .gitignore patterns if it exists
+        source_dir = os.path.dirname(script_path)
+        gitignore_path = os.path.join(source_dir, ".gitignore")
+        gitignore_spec = None
+        
+        if os.path.exists(gitignore_path):
+            with open(gitignore_path, "r") as f:
+                gitignore_spec = pathspec.PathSpec.from_lines("gitwildmatch", f)
 
-        def ignore_target_dir(dir, contents):
-            return [c for c in contents if os.path.join(dir, c) == target_directory]
+        def ignore_patterns(dir, contents):
+            ignored = []
+            # Always ignore the target directory
+            for c in contents:
+                full_path = os.path.join(dir, c)
+                if full_path == target_directory:
+                    ignored.append(c)
+                elif gitignore_spec:
+                    # Get relative path from source directory
+                    rel_path = os.path.relpath(full_path, source_dir)
+                    # Check if this path should be ignored
+                    # For directories, append / to match gitignore behavior
+                    if os.path.isdir(full_path):
+                        if gitignore_spec.match_file(rel_path + "/") or gitignore_spec.match_file(rel_path):
+                            ignored.append(c)
+                    else:
+                        if gitignore_spec.match_file(rel_path):
+                            ignored.append(c)
+            return ignored
 
         shutil.copytree(
-            os.path.dirname(script_path),
+            source_dir,
             script_dir,
             dirs_exist_ok=True,
-            ignore=ignore_target_dir,
+            ignore=ignore_patterns,
         )
 
     # Handle dependencies
