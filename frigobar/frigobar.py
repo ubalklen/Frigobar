@@ -41,12 +41,15 @@ pause
 def create_frigobar(
     script_path: str,
     target_directory: str = "frigobar",
-    python_version: str = None,
+    pyproject_file: str = None,
     requirements_file: str = None,
+    python_version: str = None,
     copy_directory: bool = False,
 ):
     if python_version and not requirements_file:
         raise Exception("python_version can only be used when requirements_file is specified")
+    if requirements_file and pyproject_file:
+        raise Exception("requirements_file and pyproject_file cannot be used together")
 
     script_path = os.path.abspath(script_path)
     if not os.path.exists(target_directory):
@@ -64,6 +67,11 @@ def create_frigobar(
         requirements_file = os.path.abspath(requirements_file)
         if not os.path.exists(requirements_file) or not os.path.isfile(requirements_file):
             raise Exception(f"Missing requirements file: {requirements_file}")
+
+    if pyproject_file:
+        pyproject_file = os.path.abspath(pyproject_file)
+        if not os.path.exists(pyproject_file) or not os.path.isfile(pyproject_file):
+            raise Exception(f"Missing pyproject file: {pyproject_file}")
 
     # Add a copy of the script to frigobar
     script_dir = os.path.join(target_directory, "script")
@@ -124,8 +132,11 @@ def create_frigobar(
     if requirements_file:
         # If requirements file is provided, copy it to the root of the distribution
         shutil.copy(requirements_file, os.path.join(target_directory, "requirements.txt"))
+    elif pyproject_file:
+        # If pyproject file is explicitly provided, copy it to the root of the distribution
+        shutil.copy(pyproject_file, os.path.join(target_directory, "pyproject.toml"))
     else:
-        # If no requirements file, try to find pyproject.toml
+        # If no requirements file or explicit pyproject file, try to find pyproject.toml in script directory
         pyproject_path = os.path.join(os.path.dirname(script_path), "pyproject.toml")
         if os.path.exists(pyproject_path):
             shutil.copy(pyproject_path, target_directory)

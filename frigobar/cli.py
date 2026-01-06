@@ -7,6 +7,7 @@ def create_frigobar(args):
     frigobar.create_frigobar(
         script_path=args.script_path,
         target_directory=args.target_directory,
+        pyproject_file=args.pyproject_file,
         requirements_file=args.requirements_file,
         python_version=args.python_version,
         copy_directory=args.copy_directory,
@@ -31,6 +32,16 @@ def main():
         default="frigobar",
         nargs="?",
         help="Folder where the distribution will be put. Defaults to 'frigobar'.",
+    )
+    parser.add_argument(
+        "-t",
+        "--pyproject-file",
+        default=None,
+        help=(
+            "Path to a pyproject.toml file that contains the dependencies of the script. "
+            "If not provided, the tool will look for a pyproject.toml file in the script's directory. "
+            "Cannot be used together with --requirements-file."
+        ),
     )
     parser.add_argument(
         "-r",
@@ -61,6 +72,8 @@ def main():
     args = parser.parse_args()
     if args.python_version and not args.requirements_file:
         parser.error("--python-version requires --requirements-file to be specified.")
+    if args.requirements_file and args.pyproject_file:
+        parser.error("--requirements-file and --pyproject-file cannot be used together.")
     create_frigobar(args)
 
 
