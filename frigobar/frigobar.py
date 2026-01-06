@@ -5,19 +5,19 @@ from subprocess import Popen
 import pathspec
 
 BATCH_TEMPLATE = """@echo off
-echo Verificando instalacao do uv...
+echo Checking uv installation...
 
-REM Verifica se o uv esta no PATH ou na pasta atual
+REM Check if uv is in PATH or in the current directory
 where uv >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
     if not exist uv.exe (
-        echo uv nao encontrado. Baixando uv...
+        echo uv not found. Downloading uv...
         powershell -Command "Invoke-WebRequest -Uri 'https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip' -OutFile 'uv.zip'; Expand-Archive 'uv.zip' -DestinationPath '.' -Force; Remove-Item 'uv.zip'"
     )
 )
 
-echo Executando script...
-REM Se baixou localmente, usa .\\uv.exe, senao tenta o do sistema
+echo Running script...
+REM If downloaded locally, use .\\uv.exe, otherwise try system uv
 if exist uv.exe (
     set UV_CMD=.\\uv.exe
 ) else (
@@ -26,10 +26,10 @@ if exist uv.exe (
 
 if exist requirements.txt (
     if not exist .venv (
-        echo Criando ambiente virtual...
+        echo Creating virtual environment...
         %UV_CMD% venv {python_arg}
     )
-    echo Instalando dependencias...
+    echo Installing dependencies...
     %UV_CMD% pip install -r requirements.txt
 )
 
