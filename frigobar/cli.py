@@ -34,6 +34,16 @@ def main():
         help="Folder where the distribution will be put. Defaults to 'frigobar'.",
     )
     parser.add_argument(
+        "-t",
+        "--pyproject-file",
+        default=None,
+        help=(
+            "Path to a pyproject.toml file that contains the dependencies of the script. "
+            "If not provided, the tool will look for a pyproject.toml file in the script's directory. "
+            "Cannot be used together with --requirements-file."
+        ),
+    )
+    parser.add_argument(
         "-r",
         "--requirements-file",
         default=None,
@@ -58,16 +68,6 @@ def main():
         "--copy-directory",
         action="store_true",
         help="Copy the contents of the script directory to the distribution. Respects .gitignore if present.",
-    )
-    parser.add_argument(
-        "-t",
-        "--pyproject-file",
-        default=None,
-        help=(
-            "Path to a pyproject.toml file that contains the dependencies of the script. "
-            "If not provided, the tool will look for a pyproject.toml file in the script's directory. "
-            "Cannot be used together with --requirements-file."
-        ),
     )
     args = parser.parse_args()
     if args.python_version and not args.requirements_file:
