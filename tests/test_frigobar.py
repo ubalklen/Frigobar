@@ -147,3 +147,101 @@ def test_create_frigobar_copy_directory_honors_gitignore():
     
     # .gitignore itself should be copied
     assert path.exists(path.join(target_dir, "script", ".gitignore"))
+
+
+def test_create_frigobar_with_explicit_pyproject_file():
+    """Test that --pyproject-file parameter works correctly"""
+    pyproject_file = path.join(test_dir, "script_folder", "pyproject.toml")
+    
+    frigobar.create_frigobar(
+        script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=None,
+        python_version=None,
+        pyproject_file=pyproject_file,
+    )
+
+    assert path.exists(path.join(target_dir, "script", "script.py"))
+    assert not path.exists(path.join(target_dir, "requirements.txt"))
+    assert path.exists(path.join(target_dir, "pyproject.toml"))
+    assert path.exists(path.join(target_dir, "script.bat"))
+
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        content = f.read()
+        # Check for the command with forward slashes (actual output)
+        assert 'run  "script/script.py"' in content
+
+
+def test_create_frigobar_pyproject_file_and_requirements_file_mutually_exclusive():
+    """Test that pyproject_file and requirements_file cannot be used together"""
+    pyproject_file = path.join(test_dir, "script_folder", "pyproject.toml")
+    
+    with pytest.raises(Exception) as excinfo:
+        frigobar.create_frigobar(
+            script_path=script_path,
+            target_directory=target_dir,
+            requirements_file=requirements_file,
+            python_version=None,
+            pyproject_file=pyproject_file,
+        )
+    assert "requirements_file and pyproject_file cannot be used together" in str(
+        excinfo.value
+    )
+
+
+def test_create_frigobar_pyproject_file_from_different_directory():
+    """Test that pyproject.toml can be loaded from a different directory than the script"""
+    # Create a temporary pyproject.toml in a different location
+    temp_dir = path.join(test_dir, "temp_config")
+    os.makedirs(temp_dir, exist_ok=True)
+    temp_pyproject = path.join(temp_dir, "pyproject.toml")
+    
+    # Use a different target directory to avoid conflicts
+    temp_target_dir = path.join(test_dir, "test_frigobar_temp")
+    
+    try:
+        # Create a custom pyproject.toml
+        with open(temp_pyproject, "w") as f:
+            f.write('[project]\nname = "custom-project"\nversion = "1.0.0"\ndependencies = ["numpy"]\n')
+        
+        frigobar.create_frigobar(
+            script_path=script_path,
+            target_directory=temp_target_dir,
+            requirements_file=None,
+            python_version=None,
+            pyproject_file=temp_pyproject,
+        )
+
+        assert path.exists(path.join(temp_target_dir, "script", "script.py"))
+        assert path.exists(path.join(temp_target_dir, "pyproject.toml"))
+        
+        # Verify the correct pyproject.toml was copied
+        with open(path.join(temp_target_dir, "pyproject.toml"), "r") as f:
+            content = f.read()
+            assert "custom-project" in content
+            assert "numpy" in content
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        shutil.rmtree(temp_target_dir, ignore_errors=True)
+
+
+def test_create_frigobar_missing_pyproject_file_raises():
+    """Test that specifying a non-existent pyproject file raises an exception"""
+    nonexistent_pyproject = path.join(test_dir, "nonexistent", "pyproject.toml")
+    
+    # Use a different target directory to avoid conflicts
+    temp_target_dir = path.join(test_dir, "test_frigobar_missing")
+    
+    try:
+        with pytest.raises(Exception) as excinfo:
+            frigobar.create_frigobar(
+                script_path=script_path,
+                target_directory=temp_target_dir,
+                requirements_file=None,
+                python_version=None,
+                pyproject_file=nonexistent_pyproject,
+            )
+        assert "Missing pyproject file" in str(excinfo.value)
+    finally:
+        shutil.rmtree(temp_target_dir, ignore_errors=True)
+
