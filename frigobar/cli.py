@@ -64,8 +64,8 @@ def main():
         default=None,
         help=(
             "Path to a pyproject.toml file that contains the dependencies of the script. "
-            "If not provided, the tool will look for a pyproject.toml file in the same directory "
-            "as the script. Cannot be used together with --requirements-file."
+            "If not provided, the tool will look for a pyproject.toml file in the script's directory. "
+            "Cannot be used together with --requirements-file."
         ),
     )
     args = parser.parse_args()
