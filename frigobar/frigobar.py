@@ -134,7 +134,7 @@ def create_frigobar(
         shutil.copy(requirements_file, os.path.join(target_directory, "requirements.txt"))
     elif pyproject_file:
         # If pyproject file is explicitly provided, copy it to the root of the distribution
-        shutil.copy(pyproject_file, target_directory)
+        shutil.copy(pyproject_file, os.path.join(target_directory, "pyproject.toml"))
     else:
         # If no requirements file or explicit pyproject file, try to find pyproject.toml in script directory
         pyproject_path = os.path.join(os.path.dirname(script_path), "pyproject.toml")
