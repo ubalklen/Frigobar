@@ -33,6 +33,11 @@ import pandas
 frigobar my_script.py
 ```
 
+**Using a custom pyproject.toml path:**
+```bash
+frigobar my_script.py -t /path/to/custom/pyproject.toml
+```
+
 ### Classical dependencies
 In this mode, you provide a standard `requirements.txt` file. You can also optionally specify the Python version to be used.
 
@@ -54,7 +59,7 @@ pip install frigobar
 ## Options
 ```
 > frigobar --help
-usage: cli.py [-h] [-r REQUIREMENTS_FILE] [-p PYTHON_VERSION] [--copy-directory] script-path [target-directory]
+usage: cli.py [-h] [-t PYPROJECT_FILE] [-r REQUIREMENTS_FILE] [-p PYTHON_VERSION] [--copy-directory] script-path [target-directory]
 
 Distribute Python scripts to Windows machines without freezing them. The folder of the resulting distribution can be copied to any Windows machine. Users should run "<script_name>.bat" to run the script. All the dependencies, including Python, will be downloaded and installed on the first run.
 
@@ -64,6 +69,8 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  -t PYPROJECT_FILE, --pyproject-file PYPROJECT_FILE
+                        Path to a pyproject.toml file that contains the dependencies of the script. If not provided, the tool will look for a pyproject.toml file in the script's directory. Cannot be used together with --requirements-file.
   -r REQUIREMENTS_FILE, --requirements-file REQUIREMENTS_FILE
                         Path to a classical requirements file (usually called requirements.txt) that lists the dependencies of the script. If not provided, dependencies must be declared in a pyproject.toml file or inline.
   -p PYTHON_VERSION, --python-version PYTHON_VERSION, --python PYTHON_VERSION

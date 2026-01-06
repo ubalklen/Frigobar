@@ -41,10 +41,10 @@ pause
 def create_frigobar(
     script_path: str,
     target_directory: str = "frigobar",
-    python_version: str = None,
-    requirements_file: str = None,
-    copy_directory: bool = False,
     pyproject_file: str = None,
+    requirements_file: str = None,
+    python_version: str = None,
+    copy_directory: bool = False,
 ):
     if python_version and not requirements_file:
         raise Exception("python_version can only be used when requirements_file is specified")

@@ -7,10 +7,10 @@ def create_frigobar(args):
     frigobar.create_frigobar(
         script_path=args.script_path,
         target_directory=args.target_directory,
+        pyproject_file=args.pyproject_file,
         requirements_file=args.requirements_file,
         python_version=args.python_version,
         copy_directory=args.copy_directory,
-        pyproject_file=args.pyproject_file,
     )
 
 
@@ -60,6 +60,7 @@ def main():
         help="Copy the contents of the script directory to the distribution. Respects .gitignore if present.",
     )
     parser.add_argument(
+        "-t",
         "--pyproject-file",
         default=None,
         help=(
