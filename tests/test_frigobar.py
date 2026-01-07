@@ -141,10 +141,10 @@ def test_create_frigobar_copy_directory_honors_gitignore():
     # Files that should be copied
     assert path.exists(path.join(target_dir, "script", "script.py"))
     assert path.exists(path.join(target_dir, "script", "another_script.py"))
-    
+
     # Directory that should be ignored according to .gitignore
     assert not path.exists(path.join(target_dir, "script", "data"))
-    
+
     # .gitignore itself should be copied
     assert path.exists(path.join(target_dir, "script", ".gitignore"))
 
@@ -152,7 +152,7 @@ def test_create_frigobar_copy_directory_honors_gitignore():
 def test_create_frigobar_with_explicit_pyproject_file():
     """Test that --pyproject-file parameter works correctly"""
     pyproject_file = path.join(test_dir, "script_folder", "pyproject.toml")
-    
+
     frigobar.create_frigobar(
         script_path=script_path,
         target_directory=target_dir,
@@ -175,7 +175,7 @@ def test_create_frigobar_with_explicit_pyproject_file():
 def test_create_frigobar_pyproject_file_and_requirements_file_mutually_exclusive():
     """Test that pyproject_file and requirements_file cannot be used together"""
     pyproject_file = path.join(test_dir, "script_folder", "pyproject.toml")
-    
+
     with pytest.raises(Exception) as excinfo:
         frigobar.create_frigobar(
             script_path=script_path,
@@ -184,9 +184,7 @@ def test_create_frigobar_pyproject_file_and_requirements_file_mutually_exclusive
             python_version=None,
             pyproject_file=pyproject_file,
         )
-    assert "requirements_file and pyproject_file cannot be used together" in str(
-        excinfo.value
-    )
+    assert "requirements_file and pyproject_file cannot be used together" in str(excinfo.value)
 
 
 def test_create_frigobar_pyproject_file_from_different_directory():
@@ -195,15 +193,17 @@ def test_create_frigobar_pyproject_file_from_different_directory():
     temp_dir = path.join(test_dir, "temp_config")
     os.makedirs(temp_dir, exist_ok=True)
     temp_pyproject = path.join(temp_dir, "pyproject.toml")
-    
+
     # Use a different target directory to avoid conflicts
     temp_target_dir = path.join(test_dir, "test_frigobar_temp")
-    
+
     try:
         # Create a custom pyproject.toml
         with open(temp_pyproject, "w") as f:
-            f.write('[project]\nname = "custom-project"\nversion = "1.0.0"\ndependencies = ["numpy"]\n')
-        
+            f.write(
+                '[project]\nname = "custom-project"\nversion = "1.0.0"\ndependencies = ["numpy"]\n'
+            )
+
         frigobar.create_frigobar(
             script_path=script_path,
             target_directory=temp_target_dir,
@@ -214,7 +214,7 @@ def test_create_frigobar_pyproject_file_from_different_directory():
 
         assert path.exists(path.join(temp_target_dir, "script", "script.py"))
         assert path.exists(path.join(temp_target_dir, "pyproject.toml"))
-        
+
         # Verify the correct pyproject.toml was copied
         with open(path.join(temp_target_dir, "pyproject.toml"), "r") as f:
             content = f.read()
@@ -228,10 +228,10 @@ def test_create_frigobar_pyproject_file_from_different_directory():
 def test_create_frigobar_missing_pyproject_file_raises():
     """Test that specifying a non-existent pyproject file raises an exception"""
     nonexistent_pyproject = path.join(test_dir, "nonexistent", "pyproject.toml")
-    
+
     # Use a different target directory to avoid conflicts
     temp_target_dir = path.join(test_dir, "test_frigobar_missing")
-    
+
     try:
         with pytest.raises(Exception) as excinfo:
             frigobar.create_frigobar(
@@ -253,7 +253,7 @@ def test_create_frigobar_with_env_vars():
         "ANOTHER_VAR": "123",
         "PATH_VAR": "C:\\some\\path",
     }
-    
+
     frigobar.create_frigobar(
         script_path=script_path,
         target_directory=target_dir,
@@ -263,7 +263,7 @@ def test_create_frigobar_with_env_vars():
     )
 
     assert path.exists(path.join(target_dir, "script.bat"))
-    
+
     with open(path.join(target_dir, "script.bat"), "r") as f:
         content = f.read()
         # Check that each environment variable is set in the bat file
@@ -283,7 +283,7 @@ def test_create_frigobar_without_env_vars():
     )
 
     assert path.exists(path.join(target_dir, "script.bat"))
-    
+
     with open(path.join(target_dir, "script.bat"), "r") as f:
         content = f.read()
         # Ensure no stray "set " commands appear when env_vars is None
@@ -302,7 +302,7 @@ def test_create_frigobar_with_empty_env_vars():
     )
 
     assert path.exists(path.join(target_dir, "script.bat"))
-    
+
     with open(path.join(target_dir, "script.bat"), "r") as f:
         content = f.read()
         assert "echo Running script..." in content
@@ -318,7 +318,7 @@ def test_create_frigobar_with_special_chars_in_env_vars():
         "VAR_WITH_ANGLE": "value<angle>",
         "VAR_WITH_PARENS": "value(with)parens",
     }
-    
+
     frigobar.create_frigobar(
         script_path=script_path,
         target_directory=target_dir,
@@ -328,7 +328,7 @@ def test_create_frigobar_with_special_chars_in_env_vars():
     )
 
     assert path.exists(path.join(target_dir, "script.bat"))
-    
+
     with open(path.join(target_dir, "script.bat"), "r") as f:
         content = f.read()
         # Check that special characters are properly escaped
@@ -338,4 +338,3 @@ def test_create_frigobar_with_special_chars_in_env_vars():
         assert "set VAR_WITH_CARET=value^^caret" in content
         assert "set VAR_WITH_ANGLE=value^<angle^>" in content
         assert "set VAR_WITH_PARENS=value^(with^)parens" in content
-
