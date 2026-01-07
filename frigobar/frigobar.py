@@ -152,10 +152,22 @@ def create_frigobar(
     python_arg = f"--python {python_version}" if python_version else ""
     
     # Format environment variables for batch file
+    # Escape special batch file characters to prevent injection
+    def escape_batch_value(value: str) -> str:
+        """Escape special characters in batch file values"""
+        # Escape special batch characters: %, ^, &, |, <, >, (, )
+        # % needs to be doubled (%%)
+        # Other characters need to be prefixed with ^
+        value = value.replace("%", "%%")
+        for char in "^&|<>()":
+            value = value.replace(char, f"^{char}")
+        return value
+    
     env_vars_str = ""
     if env_vars:
         for key, value in env_vars.items():
-            env_vars_str += f"set {key}={value}\n"
+            escaped_value = escape_batch_value(value)
+            env_vars_str += f"set {key}={escaped_value}\n"
 
     with open(bat_file, "w") as f:
         f.write(

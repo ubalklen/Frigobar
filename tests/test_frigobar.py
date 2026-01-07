@@ -307,3 +307,35 @@ def test_create_frigobar_with_empty_env_vars():
         content = f.read()
         assert "echo Running script..." in content
 
+
+def test_create_frigobar_with_special_chars_in_env_vars():
+    """Test that special batch characters are properly escaped in env vars"""
+    env_vars = {
+        "VAR_WITH_PERCENT": "value%with%percent",
+        "VAR_WITH_PIPE": "value|pipe",
+        "VAR_WITH_AMP": "value&ampersand",
+        "VAR_WITH_CARET": "value^caret",
+        "VAR_WITH_ANGLE": "value<angle>",
+        "VAR_WITH_PARENS": "value(with)parens",
+    }
+    
+    frigobar.create_frigobar(
+        script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=requirements_file,
+        python_version=python_version,
+        env_vars=env_vars,
+    )
+
+    assert path.exists(path.join(target_dir, "script.bat"))
+    
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        content = f.read()
+        # Check that special characters are properly escaped
+        assert "set VAR_WITH_PERCENT=value%%with%%percent" in content
+        assert "set VAR_WITH_PIPE=value^|pipe" in content
+        assert "set VAR_WITH_AMP=value^&ampersand" in content
+        assert "set VAR_WITH_CARET=value^^caret" in content
+        assert "set VAR_WITH_ANGLE=value^<angle^>" in content
+        assert "set VAR_WITH_PARENS=value^(with^)parens" in content
+
