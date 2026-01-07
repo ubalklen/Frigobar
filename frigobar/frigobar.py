@@ -16,6 +16,7 @@ if %ERRORLEVEL% NEQ 0 (
     )
 )
 
+{env_vars}
 echo Running script...
 REM If downloaded locally, use .\\uv.exe, otherwise try system uv
 if exist uv.exe (
@@ -45,6 +46,7 @@ def create_frigobar(
     requirements_file: str = None,
     python_version: str = None,
     copy_directory: bool = False,
+    env_vars: dict = None,
 ):
     if python_version and not requirements_file:
         raise Exception("python_version can only be used when requirements_file is specified")
@@ -148,12 +150,31 @@ def create_frigobar(
     bat_file = os.path.join(target_directory, f"{script_basename}.bat")
 
     python_arg = f"--python {python_version}" if python_version else ""
+    
+    # Format environment variables for batch file
+    # Escape special batch file characters to prevent injection
+    def escape_batch_value(value: str) -> str:
+        """Escape special characters in batch file values"""
+        # Escape special batch characters: %, ^, &, |, <, >, (, )
+        # % needs to be doubled (%%)
+        # Other characters need to be prefixed with ^
+        value = value.replace("%", "%%")
+        for char in "^&|<>()":
+            value = value.replace(char, f"^{char}")
+        return value
+    
+    env_vars_str = ""
+    if env_vars:
+        for key, value in env_vars.items():
+            escaped_value = escape_batch_value(value)
+            env_vars_str += f"set {key}={escaped_value}\n"
 
     with open(bat_file, "w") as f:
         f.write(
             BATCH_TEMPLATE.format(
                 python_arg=python_arg,
                 script_path=rel_script_path,
+                env_vars=env_vars_str,
             )
         )
 

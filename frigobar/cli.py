@@ -4,6 +4,15 @@ from frigobar import frigobar
 
 
 def create_frigobar(args):
+    # Parse environment variables from the --env-var argument
+    env_vars = {}
+    if args.env_var:
+        for env_pair in args.env_var:
+            if '=' not in env_pair:
+                raise ValueError(f"Invalid environment variable format: {env_pair}. Expected KEY=VALUE")
+            key, value = env_pair.split('=', 1)
+            env_vars[key] = value
+    
     frigobar.create_frigobar(
         script_path=args.script_path,
         target_directory=args.target_directory,
@@ -11,6 +20,7 @@ def create_frigobar(args):
         requirements_file=args.requirements_file,
         python_version=args.python_version,
         copy_directory=args.copy_directory,
+        env_vars=env_vars if env_vars else None,
     )
 
 
@@ -68,6 +78,18 @@ def main():
         "--copy-directory",
         action="store_true",
         help="Copy the contents of the script directory to the distribution. Respects .gitignore if present.",
+    )
+    parser.add_argument(
+        "-e",
+        "--env-var",
+        action="append",
+        default=None,
+        dest="env_var",
+        help=(
+            "Set environment variables in the generated batch file. "
+            "Format: KEY=VALUE. Can be used multiple times to set multiple variables. "
+            "Example: --env-var MY_VAR=value --env-var ANOTHER_VAR=123"
+        ),
     )
     args = parser.parse_args()
     if args.python_version and not args.requirements_file:
