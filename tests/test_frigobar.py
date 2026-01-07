@@ -245,3 +245,65 @@ def test_create_frigobar_missing_pyproject_file_raises():
     finally:
         shutil.rmtree(temp_target_dir, ignore_errors=True)
 
+
+def test_create_frigobar_with_env_vars():
+    """Test that environment variables are properly set in the bat file"""
+    env_vars = {
+        "MY_VAR": "test_value",
+        "ANOTHER_VAR": "123",
+        "PATH_VAR": "C:\\some\\path",
+    }
+    
+    frigobar.create_frigobar(
+        script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=requirements_file,
+        python_version=python_version,
+        env_vars=env_vars,
+    )
+
+    assert path.exists(path.join(target_dir, "script.bat"))
+    
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        content = f.read()
+        # Check that each environment variable is set in the bat file
+        assert "set MY_VAR=test_value" in content
+        assert "set ANOTHER_VAR=123" in content
+        assert "set PATH_VAR=C:\\some\\path" in content
+
+
+def test_create_frigobar_without_env_vars():
+    """Test that the bat file works correctly when no env vars are provided"""
+    frigobar.create_frigobar(
+        script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=requirements_file,
+        python_version=python_version,
+        env_vars=None,
+    )
+
+    assert path.exists(path.join(target_dir, "script.bat"))
+    
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        content = f.read()
+        # Ensure no stray "set " commands appear when env_vars is None
+        # The template should have a blank line where env_vars would go
+        assert "echo Running script..." in content
+
+
+def test_create_frigobar_with_empty_env_vars():
+    """Test that the bat file works correctly when empty env vars dict is provided"""
+    frigobar.create_frigobar(
+        script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=requirements_file,
+        python_version=python_version,
+        env_vars={},
+    )
+
+    assert path.exists(path.join(target_dir, "script.bat"))
+    
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        content = f.read()
+        assert "echo Running script..." in content
+
