@@ -4,10 +4,10 @@ from frigobar import frigobar
 
 
 def create_frigobar(args):
-    # Parse environment variables from the --env argument
+    # Parse environment variables from the --env-var argument
     env_vars = {}
-    if args.env:
-        for env_pair in args.env:
+    if args.env_var:
+        for env_pair in args.env_var:
             if '=' not in env_pair:
                 raise ValueError(f"Invalid environment variable format: {env_pair}. Expected KEY=VALUE")
             key, value = env_pair.split('=', 1)
@@ -81,13 +81,14 @@ def main():
     )
     parser.add_argument(
         "-e",
-        "--env",
+        "--env-var",
         action="append",
         default=None,
+        dest="env_var",
         help=(
             "Set environment variables in the generated batch file. "
             "Format: KEY=VALUE. Can be used multiple times to set multiple variables. "
-            "Example: --env MY_VAR=value --env ANOTHER_VAR=123"
+            "Example: --env-var MY_VAR=value --env-var ANOTHER_VAR=123"
         ),
     )
     args = parser.parse_args()
