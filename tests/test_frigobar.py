@@ -168,8 +168,8 @@ def test_create_frigobar_with_explicit_pyproject_file():
 
     with open(path.join(target_dir, "script.bat"), "r") as f:
         content = f.read()
-        # Check for the command with forward slashes (actual output)
-        assert 'run  "script/script.py"' in content
+        # Check for the command (Windows batch paths use backslashes)
+        assert 'run  "script\\script.py"' in content
 
 
 def test_create_frigobar_pyproject_file_and_requirements_file_mutually_exclusive():
