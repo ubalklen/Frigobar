@@ -51,6 +51,15 @@ Or specifying a Python version:
 frigobar my_script.py -r requirements.txt -p 3.12.0
 ```
 
+### Environment Variables
+You can set environment variables that will be available when the script runs:
+
+```bash
+frigobar my_script.py --env MY_VAR=value --env ANOTHER_VAR=123
+```
+
+These environment variables will be set in the generated batch file and will be available to your Python script when it runs.
+
 ## Installation
 ```
 pip install frigobar
@@ -59,7 +68,7 @@ pip install frigobar
 ## Options
 ```
 > frigobar --help
-usage: cli.py [-h] [-t PYPROJECT_FILE] [-r REQUIREMENTS_FILE] [-p PYTHON_VERSION] [--copy-directory] script-path [target-directory]
+usage: cli.py [-h] [-t PYPROJECT_FILE] [-r REQUIREMENTS_FILE] [-p PYTHON_VERSION] [--copy-directory] [-e ENV] script-path [target-directory]
 
 Distribute Python scripts to Windows machines without freezing them. The folder of the resulting distribution can be copied to any Windows machine. Users should run "<script_name>.bat" to run the script. All the dependencies, including Python, will be downloaded and installed on the first run.
 
@@ -76,6 +85,7 @@ options:
   -p PYTHON_VERSION, --python-version PYTHON_VERSION, --python PYTHON_VERSION
                         Python version, in X.Y.Z format, that the distribution should use. Only works when --requirements-file is specified. If not provided, the latest Python supported by the final user's system will be used.
   --copy-directory      Copy the contents of the script directory to the distribution. Respects .gitignore if present.
+  -e ENV, --env ENV     Set environment variables in the generated batch file. Format: KEY=VALUE. Can be used multiple times to set multiple variables. Example: --env MY_VAR=value --env ANOTHER_VAR=123
 ```
 
 ## Rationale
