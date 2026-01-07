@@ -21,5 +21,10 @@ dependencies = [
 [project.scripts]
 frigobar = "frigobar.cli:main"
 
+[dependency-groups]
+dev = [
+    "pytest",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["frigobar"]
