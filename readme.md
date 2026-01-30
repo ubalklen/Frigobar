@@ -60,6 +60,21 @@ frigobar my_script.py --env-var MY_VAR=value --env-var ANOTHER_VAR=123
 
 These environment variables will be set in the generated batch file and will be available to your Python script when it runs.
 
+### Copying Directories
+By default, Frigobar only copies the script file to the distribution. However, you can copy the entire directory containing the script or a specific directory.
+
+**Copy the script's directory:**
+```bash
+frigobar my_script.py --copy-directory
+```
+
+**Copy a specific directory (the script must be inside it):**
+```bash
+frigobar --include-directory /path/to/directory my_script.py
+```
+
+Both options respect `.gitignore` patterns if a `.gitignore` file is present in the source directory.
+
 ## Installation
 ```
 pip install frigobar
@@ -68,7 +83,7 @@ pip install frigobar
 ## Options
 ```
 > frigobar --help
-usage: cli.py [-h] [-t PYPROJECT_FILE] [-r REQUIREMENTS_FILE] [-p PYTHON_VERSION] [--copy-directory] [-e ENV_VAR] script-path [target-directory]
+usage: cli.py [-h] [-t PYPROJECT_FILE] [-r REQUIREMENTS_FILE] [-p PYTHON_VERSION] [--copy-directory] [--include-directory INCLUDE_DIRECTORY] [-e ENV_VAR] script-path [target-directory]
 
 Distribute Python scripts to Windows machines without freezing them. The folder of the resulting distribution can be copied to any Windows machine. Users should run "<script_name>.bat" to run the script. All the dependencies, including Python, will be downloaded and installed on the first run.
 
@@ -84,7 +99,9 @@ options:
                         Path to a classical requirements file (usually called requirements.txt) that lists the dependencies of the script. If not provided, dependencies must be declared in a pyproject.toml file or inline.
   -p PYTHON_VERSION, --python-version PYTHON_VERSION, --python PYTHON_VERSION
                         Python version, in X.Y.Z format, that the distribution should use. Only works when --requirements-file is specified. If not provided, the latest Python supported by the final user's system will be used.
-  --copy-directory      Copy the contents of the script directory to the distribution. Respects .gitignore if present.
+  --copy-directory      Copy the contents of the script directory to the distribution. Respects .gitignore if present. Cannot be used together with --include-directory.
+  --include-directory INCLUDE_DIRECTORY
+                        Copy the specified directory to the distribution. The script must be located inside this directory. Respects .gitignore if present. Cannot be used together with --copy-directory.
   -e ENV_VAR, --env-var ENV_VAR
                         Set environment variables in the generated batch file. Format: KEY=VALUE. Can be used multiple times to set multiple variables. Example: --env-var MY_VAR=value --env-var ANOTHER_VAR=123
 ```
