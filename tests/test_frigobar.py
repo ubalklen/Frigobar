@@ -343,7 +343,7 @@ def test_create_frigobar_with_special_chars_in_env_vars():
 def test_create_frigobar_with_include_directory():
     """Test that --include-directory copies the specified directory and sets PYTHONPATH"""
     include_dir = path.join(test_dir, "script_folder")
-    
+
     frigobar.create_frigobar(
         script_path=script_path,
         target_directory=target_dir,
@@ -373,7 +373,7 @@ def test_create_frigobar_with_include_directory():
 def test_create_frigobar_include_directory_honors_gitignore():
     """Test that --include-directory honors .gitignore patterns"""
     include_dir = path.join(test_dir, "script_folder")
-    
+
     frigobar.create_frigobar(
         script_path=script_path,
         target_directory=target_dir,
@@ -410,7 +410,7 @@ def test_create_frigobar_include_directory_script_not_inside():
     # Use a directory that doesn't contain the script
     include_dir = path.join(test_dir, "nonexistent")
 
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(Exception):
         frigobar.create_frigobar(
             script_path=script_path,
             target_directory=target_dir,
@@ -424,7 +424,7 @@ def test_create_frigobar_include_directory_script_not_inside():
 def test_create_frigobar_include_directory_with_requirements():
     """Test --include-directory with requirements file"""
     include_dir = path.join(test_dir, "script_folder")
-    
+
     frigobar.create_frigobar(
         script_path=script_path,
         target_directory=target_dir,
@@ -442,3 +442,41 @@ def test_create_frigobar_include_directory_with_requirements():
         assert "pip install -r requirements.txt" in content
         assert f'run --python {python_version} "script\\script.py"' in content
         assert 'set "PYTHONPATH=%~dp0script"' in content
+
+
+def test_create_frigobar_with_run_template():
+    run_template = "gunicorn --chdir script/src my_app.main:app --workers 4"
+    frigobar.create_frigobar(
+        script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=None,
+        python_version=None,
+        run_template=run_template,
+    )
+
+    assert path.exists(path.join(target_dir, "script", "script.py"))
+    assert path.exists(path.join(target_dir, "pyproject.toml"))
+    assert path.exists(path.join(target_dir, "script.bat"))
+
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        content = f.read()
+        assert 'run  gunicorn --chdir script/src my_app.main:app --workers 4' in content
+
+
+def test_create_frigobar_with_run_template_and_python_version():
+    run_template = "streamlit run {script} --server.port 8501"
+    frigobar.create_frigobar(
+        script_path=script_path,
+        target_directory=target_dir,
+        requirements_file=requirements_file,
+        python_version=python_version,
+        run_template=run_template,
+    )
+
+    assert path.exists(path.join(target_dir, "script", "script.py"))
+    assert path.exists(path.join(target_dir, "requirements.txt"))
+    assert path.exists(path.join(target_dir, "script.bat"))
+
+    with open(path.join(target_dir, "script.bat"), "r") as f:
+        content = f.read()
+        assert f'run --python {python_version} streamlit run "script\\script.py" --server.port 8501' in content

@@ -75,6 +75,26 @@ frigobar --include-directory /path/to/directory my_script.py
 
 Both options respect `.gitignore` patterns if a `.gitignore` file is present in the source directory.
 
+### Custom run template
+By default, the generated batch file will run `uv run my_script.py`. For more complex scenarios, you can specify a custom template for the `uv run` command in the generated batch file with the `--run-template` option. Use `{script}` as a placeholder for the script path. The template will be used as the argument to `uv run`.
+
+For example, if your script use Gunicorn:
+```bash
+frigobar my_script.py --run-template "gunicorn --chdir script/src my_app.main:app --workers 4"
+```
+will generate a batch file that runs `uv run gunicorn --chdir script/src my_app.main:app --workers 4`, instead of the default `uv run "script\my_script.py"`.
+
+Or for a Streamlit app:
+
+```bash
+frigobar my_script.py --run-template "streamlit run {script} --server.port 8501"
+```
+
+will generate a batch file that runs`uv run streamlit run "script\my_script.py" --server.port 8501`.
+
+Note: The template is applied after `uv run`, so it cannot replace the `uv run` part itself.
+
+
 ## Installation
 ```
 pip install frigobar
@@ -104,6 +124,8 @@ options:
                         Copy the specified directory to the distribution. The script must be located inside this directory. Respects .gitignore if present. Cannot be used together with --copy-directory.
   -e ENV_VAR, --env-var ENV_VAR
                         Set environment variables in the generated batch file. Format: KEY=VALUE. Can be used multiple times to set multiple variables. Example: --env-var MY_VAR=value --env-var ANOTHER_VAR=123
+  --run-template RUN_TEMPLATE
+                        Custom template for the run command in the batch file. Use {script} as a placeholder for the script path. If not provided, defaults to 'uv run {script}'. Example: --run-template 'python {script}'
 ```
 
 ## Rationale

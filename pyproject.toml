@@ -28,3 +28,6 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["frigobar"]
+
+[tool.ruff]
+line-length = 99

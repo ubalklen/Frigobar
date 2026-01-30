@@ -35,7 +35,7 @@ if exist requirements.txt (
     %UV_CMD% pip install -r requirements.txt
 )
 
-%UV_CMD% run {python_arg} "{script_path}"
+%UV_CMD% run {run_suffix}
 pause
 """
 
@@ -49,6 +49,7 @@ def create_frigobar(
     copy_directory: bool = False,
     include_directory: str = None,
     env_vars: dict = None,
+    run_template: str = None,
 ):
     if python_version and not requirements_file:
         raise Exception("python_version can only be used when requirements_file is specified")
@@ -82,53 +83,58 @@ def create_frigobar(
     # Add a copy of the script to frigobar
     script_dir = os.path.join(target_directory, "script")
     os.mkdir(script_dir)
-    
+
     def create_ignore_patterns(base_dir):
         def ignore_patterns(dir, contents):
             # Always ignore the target directory
             ignored = [c for c in contents if os.path.join(dir, c) == target_directory]
-            
+
             # Apply .gitignore patterns if available
             if gitignore_spec:
                 # Calculate relative path from base_dir
                 rel_dir = os.path.relpath(dir, base_dir)
-                if rel_dir == '.':
-                    rel_dir = ''
-                
+                if rel_dir == ".":
+                    rel_dir = ""
+
                 for item in contents:
                     if item in ignored:
                         continue
-                    
+
                     # Build the relative path for this item
                     if rel_dir:
                         item_path = os.path.join(rel_dir, item)
                     else:
                         item_path = item
-                    
+
                     # Check if item is a directory (need to append / for directory patterns)
                     full_item_path = os.path.join(dir, item)
                     if os.path.isdir(full_item_path):
                         # Check both with and without trailing slash
-                        if gitignore_spec.match_file(item_path) or gitignore_spec.match_file(item_path + '/'):
+                        if gitignore_spec.match_file(item_path) or gitignore_spec.match_file(
+                            item_path + "/"
+                        ):
                             ignored.append(item)
                     else:
                         if gitignore_spec.match_file(item_path):
                             ignored.append(item)
-            
+
             return ignored
+
         return ignore_patterns
-    
+
     if include_directory:
         include_directory = os.path.abspath(include_directory)
         if not os.path.exists(include_directory) or not os.path.isdir(include_directory):
-            raise Exception(f"Include directory does not exist or is not a directory: {include_directory}")
-        
+            raise Exception(
+                f"Include directory does not exist or is not a directory: {include_directory}"
+            )
+
         # Load .gitignore patterns if the file exists
         gitignore_path = os.path.join(include_directory, ".gitignore")
         gitignore_spec = None
         if os.path.exists(gitignore_path):
-            with open(gitignore_path, 'r', encoding='utf-8') as f:
-                gitignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', f)
+            with open(gitignore_path, "r", encoding="utf-8") as f:
+                gitignore_spec = pathspec.PathSpec.from_lines("gitwildmatch", f)
 
         ignore_patterns = create_ignore_patterns(include_directory)
 
@@ -140,13 +146,13 @@ def create_frigobar(
         )
     elif copy_directory:
         source_dir = os.path.dirname(script_path)
-        
+
         # Load .gitignore patterns if the file exists
         gitignore_path = os.path.join(source_dir, ".gitignore")
         gitignore_spec = None
         if os.path.exists(gitignore_path):
-            with open(gitignore_path, 'r', encoding='utf-8') as f:
-                gitignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', f)
+            with open(gitignore_path, "r", encoding="utf-8") as f:
+                gitignore_spec = pathspec.PathSpec.from_lines("gitwildmatch", f)
 
         ignore_patterns = create_ignore_patterns(source_dir)
 
@@ -184,7 +190,15 @@ def create_frigobar(
     bat_file = os.path.join(target_directory, f"{script_basename}.bat")
 
     python_arg = f"--python {python_version}" if python_version else ""
-    
+
+    # Determine the run suffix
+    if run_template:
+        script_quoted = f'"{rel_script_path}"'
+        template_formatted = run_template.replace("{script}", script_quoted)
+        run_suffix = f'{python_arg} {template_formatted}'
+    else:
+        run_suffix = f'{python_arg} "{rel_script_path}"'
+
     # Format environment variables for batch file
     # Escape special batch file characters to prevent injection
     def escape_batch_value(value: str) -> str:
@@ -196,7 +210,7 @@ def create_frigobar(
         for char in "^&|<>()":
             value = value.replace(char, f"^{char}")
         return value
-    
+
     env_vars_str = ""
     if env_vars:
         for key, value in env_vars.items():
@@ -206,7 +220,7 @@ def create_frigobar(
     pythonpath_str = ""
     if include_directory:
         # Set PYTHONPATH to the script directory so modules can be imported
-        pythonpath_str = f'set "PYTHONPATH=%~dp0script"\n'
+        pythonpath_str = 'set "PYTHONPATH=%~dp0script"\n'
 
     with open(bat_file, "w") as f:
         f.write(
@@ -215,6 +229,7 @@ def create_frigobar(
                 script_path=rel_script_path,
                 pythonpath=pythonpath_str,
                 env_vars=env_vars_str,
+                run_suffix=run_suffix,
             )
         )
 

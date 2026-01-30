@@ -9,11 +9,13 @@ def create_frigobar(args):
     env_vars = {}
     if args.env_var:
         for env_pair in args.env_var:
-            if '=' not in env_pair:
-                raise ValueError(f"Invalid environment variable format: {env_pair}. Expected KEY=VALUE")
-            key, value = env_pair.split('=', 1)
+            if "=" not in env_pair:
+                raise ValueError(
+                    f"Invalid environment variable format: {env_pair}. Expected KEY=VALUE"
+                )
+            key, value = env_pair.split("=", 1)
             env_vars[key] = value
-    
+
     frigobar.create_frigobar(
         script_path=args.script_path,
         target_directory=args.target_directory,
@@ -23,6 +25,7 @@ def create_frigobar(args):
         copy_directory=args.copy_directory,
         include_directory=args.include_directory,
         env_vars=env_vars if env_vars else None,
+        run_template=args.run_template,
     )
 
 
@@ -99,6 +102,15 @@ def main():
             "Set environment variables in the generated batch file. "
             "Format: KEY=VALUE. Can be used multiple times to set multiple variables. "
             "Example: --env-var MY_VAR=value --env-var ANOTHER_VAR=123"
+        ),
+    )
+    parser.add_argument(
+        "--run-template",
+        default=None,
+        help=(
+            "Custom template for the run command in the batch file. Use {script} as a placeholder for the script path. "
+            "The template will be used as the argument to 'uv run'. If not provided, defaults to '{script}'. "
+            "Example: --run-template 'streamlit run {script} --server.port 8501'"
         ),
     )
     args = parser.parse_args()
