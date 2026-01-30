@@ -13,7 +13,7 @@ wheels = [
 
 [[package]]
 name = "frigobar"
-version = "9"
+version = "10"
 source = { editable = "." }
 dependencies = [
     { name = "pathspec" },
