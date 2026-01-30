@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from frigobar import frigobar
 
@@ -20,6 +21,7 @@ def create_frigobar(args):
         requirements_file=args.requirements_file,
         python_version=args.python_version,
         copy_directory=args.copy_directory,
+        include_directory=args.include_directory,
         env_vars=env_vars if env_vars else None,
     )
 
@@ -80,6 +82,14 @@ def main():
         help="Copy the contents of the script directory to the distribution. Respects .gitignore if present.",
     )
     parser.add_argument(
+        "--include-directory",
+        default=None,
+        help=(
+            "Copy the specified directory to the distribution. The script must be located inside this directory (or in a subdirectory). "
+            "Respects .gitignore if present. Cannot be used together with --copy-directory."
+        ),
+    )
+    parser.add_argument(
         "-e",
         "--env-var",
         action="append",
@@ -96,6 +106,13 @@ def main():
         parser.error("--python-version requires --requirements-file to be specified.")
     if args.requirements_file and args.pyproject_file:
         parser.error("--requirements-file and --pyproject-file cannot be used together.")
+    if args.copy_directory and args.include_directory:
+        parser.error("--copy-directory and --include-directory cannot be used together.")
+    if args.include_directory:
+        include_dir = os.path.abspath(args.include_directory)
+        script_dir = os.path.abspath(args.script_path)
+        if not os.path.commonpath([include_dir]) == os.path.commonpath([include_dir, script_dir]):
+            parser.error("The script must be located inside the --include-directory.")
     create_frigobar(args)
 
 
