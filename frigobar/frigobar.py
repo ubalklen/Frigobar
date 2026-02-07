@@ -138,10 +138,12 @@ def create_frigobar(
 
         ignore_patterns = create_ignore_patterns(include_directory)
 
+        # Copy the directory as a subdirectory to preserve structure
+        dir_name = os.path.basename(include_directory)
+        dest_dir = os.path.join(script_dir, dir_name)
         shutil.copytree(
             include_directory,
-            script_dir,
-            dirs_exist_ok=True,
+            dest_dir,
             ignore=ignore_patterns,
         )
     elif copy_directory:
@@ -181,10 +183,14 @@ def create_frigobar(
     # Create bat file
     if include_directory:
         # Calculate relative path from include_directory to script
+        dir_name = os.path.basename(include_directory)
         rel_script_path = os.path.relpath(script_path, include_directory)
-        rel_script_path = os.path.join("script", rel_script_path)
+        rel_script_path = os.path.join("script", dir_name, rel_script_path)
     else:
         rel_script_path = os.path.join("script", os.path.basename(script_path))
+    
+    # Convert to Windows path separators for the batch file
+    rel_script_path = rel_script_path.replace("/", "\\")
 
     script_basename = os.path.splitext(os.path.basename(script_path))[0]
     bat_file = os.path.join(target_directory, f"{script_basename}.bat")
@@ -219,8 +225,9 @@ def create_frigobar(
 
     pythonpath_str = ""
     if include_directory:
-        # Set PYTHONPATH to the script directory so modules can be imported
-        pythonpath_str = 'set "PYTHONPATH=%~dp0script"\n'
+        # Set PYTHONPATH to the included directory so modules can be imported
+        dir_name = os.path.basename(include_directory)
+        pythonpath_str = f'set "PYTHONPATH=%~dp0script\\{dir_name}"\n'
 
     with open(bat_file, "w") as f:
         f.write(
