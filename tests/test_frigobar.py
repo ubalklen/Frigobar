@@ -1,6 +1,7 @@
 import os
 import shutil
 from os import path
+from unittest.mock import patch
 
 import pytest
 
@@ -460,7 +461,7 @@ def test_create_frigobar_with_run_template():
 
     with open(path.join(target_dir, "script.bat"), "r") as f:
         content = f.read()
-        assert 'run  gunicorn --chdir script/src my_app.main:app --workers 4' in content
+        assert "run  gunicorn --chdir script/src my_app.main:app --workers 4" in content
 
 
 def test_create_frigobar_with_run_template_and_python_version():
@@ -479,4 +480,96 @@ def test_create_frigobar_with_run_template_and_python_version():
 
     with open(path.join(target_dir, "script.bat"), "r") as f:
         content = f.read()
-        assert f'run --python {python_version} streamlit run "script\\script.py" --server.port 8501' in content
+        assert (
+            f'run --python {python_version} streamlit run "script\\script.py" --server.port 8501'
+            in content
+        )
+
+
+def test_create_frigobar_copy_directory_excludes_git_dir(tmp_path):
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    (source_dir / "script.py").write_text("print('hello')")
+    (source_dir / ".git").mkdir()
+    (source_dir / ".git" / "config").write_text("[core]")
+    (source_dir / "real_file.txt").write_text("keep me")
+
+    target = tmp_path / "dist"
+
+    frigobar.create_frigobar(
+        script_path=str(source_dir / "script.py"),
+        target_directory=str(target),
+        copy_directory=True,
+    )
+
+    assert not path.exists(path.join(str(target), "script", ".git"))
+    assert path.exists(path.join(str(target), "script", "script.py"))
+    assert path.exists(path.join(str(target), "script", "real_file.txt"))
+
+
+def test_create_frigobar_include_directory_excludes_git_dir(tmp_path):
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    (source_dir / "script.py").write_text("print('hello')")
+    (source_dir / ".git").mkdir()
+    (source_dir / ".git" / "config").write_text("[core]")
+
+    target = tmp_path / "dist"
+
+    frigobar.create_frigobar(
+        script_path=str(source_dir / "script.py"),
+        target_directory=str(target),
+        include_directory=str(source_dir),
+    )
+
+    assert not path.exists(path.join(str(target), "script", ".git"))
+    assert path.exists(path.join(str(target), "script", "script.py"))
+
+
+def test_create_frigobar_copy_directory_git_based_filtering(tmp_path):
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    (source_dir / "tracked.py").write_text("print('tracked')")
+    (source_dir / "ignored.log").write_text("should be ignored")
+    (source_dir / ".venv").mkdir()
+    (source_dir / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin")
+
+    git_files = {"tracked.py"}
+
+    target = tmp_path / "dist"
+
+    with patch("frigobar.frigobar._get_git_non_ignored_files", return_value=git_files):
+        frigobar.create_frigobar(
+            script_path=str(source_dir / "tracked.py"),
+            target_directory=str(target),
+            copy_directory=True,
+        )
+
+    assert path.exists(path.join(str(target), "script", "tracked.py"))
+    assert not path.exists(path.join(str(target), "script", "ignored.log"))
+    assert not path.exists(path.join(str(target), "script", ".venv"))
+
+
+def test_create_frigobar_falls_back_to_pathspec_when_no_git(tmp_path):
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    (source_dir / "script.py").write_text("print('hello')")
+    (source_dir / ".gitignore").write_text("*.log\nbuild/\n")
+    (source_dir / "debug.log").write_text("log data")
+    build_dir = source_dir / "build"
+    build_dir.mkdir()
+    (build_dir / "output.bin").write_text("binary data")
+
+    target = tmp_path / "dist"
+
+    with patch("frigobar.frigobar._get_git_non_ignored_files", return_value=None):
+        frigobar.create_frigobar(
+            script_path=str(source_dir / "script.py"),
+            target_directory=str(target),
+            copy_directory=True,
+        )
+
+    assert path.exists(path.join(str(target), "script", "script.py"))
+    assert path.exists(path.join(str(target), "script", ".gitignore"))
+    assert not path.exists(path.join(str(target), "script", "debug.log"))
+    assert not path.exists(path.join(str(target), "script", "build"))

@@ -1,8 +1,11 @@
 import glob
 import os
 import shutil
-from subprocess import Popen
+from subprocess import CalledProcessError, Popen, run
+
 import pathspec
+
+ALWAYS_EXCLUDED = {".git"}
 
 BATCH_TEMPLATE = """@echo off
 echo Checking uv installation...
@@ -38,6 +41,79 @@ if exist requirements.txt (
 %UV_CMD% run {run_suffix}
 pause
 """
+
+
+def _get_git_non_ignored_files(directory):
+    try:
+        result = run(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+            cwd=directory,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return {os.path.normpath(f) for f in result.stdout.strip().splitlines() if f}
+    except (CalledProcessError, FileNotFoundError, OSError):
+        return None
+
+
+def _build_tracked_dirs(git_files):
+    dirs = set()
+    for f in git_files:
+        parts = os.path.normpath(f).split(os.sep)
+        for i in range(1, len(parts)):
+            dirs.add(os.sep.join(parts[:i]))
+    return dirs
+
+
+def _load_gitignore_spec(directory):
+    gitignore_path = os.path.join(directory, ".gitignore")
+    if os.path.exists(gitignore_path):
+        with open(gitignore_path, "r", encoding="utf-8") as f:
+            return pathspec.PathSpec.from_lines("gitignore", f)
+    return None
+
+
+def _create_ignore_fn(base_dir, target_directory, git_files=None, gitignore_spec=None):
+    git_dirs = _build_tracked_dirs(git_files) if git_files is not None else None
+
+    def ignore_fn(directory, contents):
+        ignored = []
+        rel_dir = os.path.relpath(directory, base_dir)
+        if rel_dir == ".":
+            rel_dir = ""
+
+        for item in contents:
+            full_path = os.path.join(directory, item)
+
+            if full_path == target_directory or item in ALWAYS_EXCLUDED:
+                ignored.append(item)
+                continue
+
+            item_path = os.path.join(rel_dir, item) if rel_dir else item
+            item_path = os.path.normpath(item_path)
+
+            if git_files is not None:
+                if os.path.isdir(full_path):
+                    if item_path not in git_dirs:
+                        ignored.append(item)
+                else:
+                    if item_path not in git_files:
+                        ignored.append(item)
+            elif gitignore_spec:
+                check_path = item_path.replace(os.sep, "/")
+                if os.path.isdir(full_path):
+                    if gitignore_spec.match_file(check_path) or gitignore_spec.match_file(
+                        check_path + "/"
+                    ):
+                        ignored.append(item)
+                else:
+                    if gitignore_spec.match_file(check_path):
+                        ignored.append(item)
+
+        return ignored
+
+    return ignore_fn
 
 
 def create_frigobar(
@@ -84,44 +160,6 @@ def create_frigobar(
     script_dir = os.path.join(target_directory, "script")
     os.mkdir(script_dir)
 
-    def create_ignore_patterns(base_dir):
-        def ignore_patterns(dir, contents):
-            # Always ignore the target directory
-            ignored = [c for c in contents if os.path.join(dir, c) == target_directory]
-
-            # Apply .gitignore patterns if available
-            if gitignore_spec:
-                # Calculate relative path from base_dir
-                rel_dir = os.path.relpath(dir, base_dir)
-                if rel_dir == ".":
-                    rel_dir = ""
-
-                for item in contents:
-                    if item in ignored:
-                        continue
-
-                    # Build the relative path for this item
-                    if rel_dir:
-                        item_path = os.path.join(rel_dir, item)
-                    else:
-                        item_path = item
-
-                    # Check if item is a directory (need to append / for directory patterns)
-                    full_item_path = os.path.join(dir, item)
-                    if os.path.isdir(full_item_path):
-                        # Check both with and without trailing slash
-                        if gitignore_spec.match_file(item_path) or gitignore_spec.match_file(
-                            item_path + "/"
-                        ):
-                            ignored.append(item)
-                    else:
-                        if gitignore_spec.match_file(item_path):
-                            ignored.append(item)
-
-            return ignored
-
-        return ignore_patterns
-
     if include_directory:
         include_directory = os.path.abspath(include_directory)
         if not os.path.exists(include_directory) or not os.path.isdir(include_directory):
@@ -129,38 +167,30 @@ def create_frigobar(
                 f"Include directory does not exist or is not a directory: {include_directory}"
             )
 
-        # Load .gitignore patterns if the file exists
-        gitignore_path = os.path.join(include_directory, ".gitignore")
-        gitignore_spec = None
-        if os.path.exists(gitignore_path):
-            with open(gitignore_path, "r", encoding="utf-8") as f:
-                gitignore_spec = pathspec.PathSpec.from_lines("gitwildmatch", f)
-
-        ignore_patterns = create_ignore_patterns(include_directory)
+        git_files = _get_git_non_ignored_files(include_directory)
+        gitignore_spec = _load_gitignore_spec(include_directory) if git_files is None else None
+        ignore_fn = _create_ignore_fn(
+            include_directory, target_directory, git_files, gitignore_spec
+        )
 
         shutil.copytree(
             include_directory,
             script_dir,
             dirs_exist_ok=True,
-            ignore=ignore_patterns,
+            ignore=ignore_fn,
         )
     elif copy_directory:
         source_dir = os.path.dirname(script_path)
 
-        # Load .gitignore patterns if the file exists
-        gitignore_path = os.path.join(source_dir, ".gitignore")
-        gitignore_spec = None
-        if os.path.exists(gitignore_path):
-            with open(gitignore_path, "r", encoding="utf-8") as f:
-                gitignore_spec = pathspec.PathSpec.from_lines("gitwildmatch", f)
-
-        ignore_patterns = create_ignore_patterns(source_dir)
+        git_files = _get_git_non_ignored_files(source_dir)
+        gitignore_spec = _load_gitignore_spec(source_dir) if git_files is None else None
+        ignore_fn = _create_ignore_fn(source_dir, target_directory, git_files, gitignore_spec)
 
         shutil.copytree(
             source_dir,
             script_dir,
             dirs_exist_ok=True,
-            ignore=ignore_patterns,
+            ignore=ignore_fn,
         )
     else:
         shutil.copy(script_path, script_dir)
@@ -195,7 +225,7 @@ def create_frigobar(
     if run_template:
         script_quoted = f'"{rel_script_path}"'
         template_formatted = run_template.replace("{script}", script_quoted)
-        run_suffix = f'{python_arg} {template_formatted}'
+        run_suffix = f"{python_arg} {template_formatted}"
     else:
         run_suffix = f'{python_arg} "{rel_script_path}"'
 
