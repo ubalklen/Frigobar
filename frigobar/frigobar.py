@@ -173,10 +173,11 @@ def create_frigobar(
             include_directory, target_directory, git_files, gitignore_spec
         )
 
+        include_dir_name = os.path.basename(include_directory)
+        dest_dir = os.path.join(script_dir, include_dir_name)
         shutil.copytree(
             include_directory,
-            script_dir,
-            dirs_exist_ok=True,
+            dest_dir,
             ignore=ignore_fn,
         )
     elif copy_directory:
@@ -210,9 +211,9 @@ def create_frigobar(
 
     # Create bat file
     if include_directory:
-        # Calculate relative path from include_directory to script
+        include_dir_name = os.path.basename(include_directory)
         rel_script_path = os.path.relpath(script_path, include_directory)
-        rel_script_path = os.path.join("script", rel_script_path)
+        rel_script_path = os.path.join("script", include_dir_name, rel_script_path)
     else:
         rel_script_path = os.path.join("script", os.path.basename(script_path))
 
@@ -249,8 +250,8 @@ def create_frigobar(
 
     pythonpath_str = ""
     if include_directory:
-        # Set PYTHONPATH to the script directory so modules can be imported
-        pythonpath_str = 'set "PYTHONPATH=%~dp0script"\n'
+        include_dir_name = os.path.basename(include_directory)
+        pythonpath_str = f'set "PYTHONPATH=%~dp0script\\{include_dir_name}"\n'
 
     with open(bat_file, "w") as f:
         f.write(

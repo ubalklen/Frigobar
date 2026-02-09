@@ -351,24 +351,24 @@ def test_create_frigobar_with_include_directory():
         include_directory=include_dir,
     )
 
-    # Files that should be copied
-    assert path.exists(path.join(target_dir, "script", "script.py"))
-    assert path.exists(path.join(target_dir, "script", "another_script.py"))
-    assert path.exists(path.join(target_dir, "script", "pyproject.toml"))
-    assert path.exists(path.join(target_dir, "script", "requirements.txt"))
+    # Files that should be copied (preserving directory structure)
+    assert path.exists(path.join(target_dir, "script", "script_folder", "script.py"))
+    assert path.exists(path.join(target_dir, "script", "script_folder", "another_script.py"))
+    assert path.exists(path.join(target_dir, "script", "script_folder", "pyproject.toml"))
+    assert path.exists(path.join(target_dir, "script", "script_folder", "requirements.txt"))
 
     # Directory that should be ignored according to .gitignore
-    assert not path.exists(path.join(target_dir, "script", "data"))
+    assert not path.exists(path.join(target_dir, "script", "script_folder", "data"))
 
     # .gitignore itself should be copied
-    assert path.exists(path.join(target_dir, "script", ".gitignore"))
+    assert path.exists(path.join(target_dir, "script", "script_folder", ".gitignore"))
 
     # Check batch file has PYTHONPATH set
     with open(path.join(target_dir, "script.bat"), "r") as f:
         content = f.read()
-        assert 'set "PYTHONPATH=%~dp0script"' in content
-        # Script path should be relative
-        assert 'run  "script\\script.py"' in content
+        assert 'set "PYTHONPATH=%~dp0script\\script_folder"' in content
+        # Script path should be relative (preserving dir structure)
+        assert 'run  "script\\script_folder\\script.py"' in content
 
 
 def test_create_frigobar_include_directory_honors_gitignore():
@@ -381,15 +381,15 @@ def test_create_frigobar_include_directory_honors_gitignore():
         include_directory=include_dir,
     )
 
-    # Files that should be copied
-    assert path.exists(path.join(target_dir, "script", "script.py"))
-    assert path.exists(path.join(target_dir, "script", "another_script.py"))
+    # Files that should be copied (preserving directory structure)
+    assert path.exists(path.join(target_dir, "script", "script_folder", "script.py"))
+    assert path.exists(path.join(target_dir, "script", "script_folder", "another_script.py"))
 
     # Directory that should be ignored according to .gitignore
-    assert not path.exists(path.join(target_dir, "script", "data"))
+    assert not path.exists(path.join(target_dir, "script", "script_folder", "data"))
 
     # .gitignore itself should be copied
-    assert path.exists(path.join(target_dir, "script", ".gitignore"))
+    assert path.exists(path.join(target_dir, "script", "script_folder", ".gitignore"))
 
 
 def test_create_frigobar_include_directory_and_copy_directory_mutually_exclusive():
@@ -434,15 +434,15 @@ def test_create_frigobar_include_directory_with_requirements():
         include_directory=include_dir,
     )
 
-    assert path.exists(path.join(target_dir, "script", "script.py"))
+    assert path.exists(path.join(target_dir, "script", "script_folder", "script.py"))
     assert path.exists(path.join(target_dir, "requirements.txt"))
     assert path.exists(path.join(target_dir, "script.bat"))
 
     with open(path.join(target_dir, "script.bat"), "r") as f:
         content = f.read()
         assert "pip install -r requirements.txt" in content
-        assert f'run --python {python_version} "script\\script.py"' in content
-        assert 'set "PYTHONPATH=%~dp0script"' in content
+        assert f'run --python {python_version} "script\\script_folder\\script.py"' in content
+        assert 'set "PYTHONPATH=%~dp0script\\script_folder"' in content
 
 
 def test_create_frigobar_with_run_template():
@@ -522,8 +522,8 @@ def test_create_frigobar_include_directory_excludes_git_dir(tmp_path):
         include_directory=str(source_dir),
     )
 
-    assert not path.exists(path.join(str(target), "script", ".git"))
-    assert path.exists(path.join(str(target), "script", "script.py"))
+    assert not path.exists(path.join(str(target), "script", "project", ".git"))
+    assert path.exists(path.join(str(target), "script", "project", "script.py"))
 
 
 def test_create_frigobar_copy_directory_git_based_filtering(tmp_path):
