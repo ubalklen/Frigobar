@@ -59,6 +59,7 @@ def _get_git_non_ignored_files(directory):
             cwd=directory,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             check=True,
         )
         return {os.path.normpath(f) for f in result.stdout.strip("\0").split("\0") if f}

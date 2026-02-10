@@ -590,6 +590,7 @@ def test_get_git_non_ignored_files_handles_non_ascii_names():
     cmd = mock_run.call_args[0][0]
     assert "-z" in cmd
     assert "core.quotepath=false" in cmd
+    assert mock_run.call_args[1]["encoding"] == "utf-8"
 
 
 def test_create_frigobar_copy_directory_with_non_ascii_filenames(tmp_path):
