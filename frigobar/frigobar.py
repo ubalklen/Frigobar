@@ -46,13 +46,22 @@ pause
 def _get_git_non_ignored_files(directory):
     try:
         result = run(
-            ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+            [
+                "git",
+                "-c",
+                "core.quotepath=false",
+                "ls-files",
+                "-z",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+            ],
             cwd=directory,
             capture_output=True,
             text=True,
             check=True,
         )
-        return {os.path.normpath(f) for f in result.stdout.strip().splitlines() if f}
+        return {os.path.normpath(f) for f in result.stdout.strip("\0").split("\0") if f}
     except (CalledProcessError, FileNotFoundError, OSError):
         return None
 

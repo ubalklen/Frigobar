@@ -1,7 +1,7 @@
 import os
 import shutil
 from os import path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -573,3 +573,42 @@ def test_create_frigobar_falls_back_to_pathspec_when_no_git(tmp_path):
     assert path.exists(path.join(str(target), "script", ".gitignore"))
     assert not path.exists(path.join(str(target), "script", "debug.log"))
     assert not path.exists(path.join(str(target), "script", "build"))
+
+
+def test_get_git_non_ignored_files_handles_non_ascii_names():
+    mock_result = MagicMock()
+    mock_result.stdout = "tracked.py\0Notificação.docx\0résumé.txt\0"
+
+    with patch("frigobar.frigobar.run", return_value=mock_result) as mock_run:
+        result = frigobar._get_git_non_ignored_files("/fake/dir")
+
+    assert result == {
+        os.path.normpath("tracked.py"),
+        os.path.normpath("Notificação.docx"),
+        os.path.normpath("résumé.txt"),
+    }
+    cmd = mock_run.call_args[0][0]
+    assert "-z" in cmd
+    assert "core.quotepath=false" in cmd
+
+
+def test_create_frigobar_copy_directory_with_non_ascii_filenames(tmp_path):
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    (source_dir / "script.py").write_text("print('hello')")
+    (source_dir / "Notificação.docx").write_bytes(b"doc content")
+    (source_dir / "résumé.txt").write_text("resume")
+
+    git_files = {"script.py", "Notificação.docx", "résumé.txt"}
+    target = tmp_path / "dist"
+
+    with patch("frigobar.frigobar._get_git_non_ignored_files", return_value=git_files):
+        frigobar.create_frigobar(
+            script_path=str(source_dir / "script.py"),
+            target_directory=str(target),
+            copy_directory=True,
+        )
+
+    assert path.exists(path.join(str(target), "script", "script.py"))
+    assert path.exists(path.join(str(target), "script", "Notificação.docx"))
+    assert path.exists(path.join(str(target), "script", "résumé.txt"))
