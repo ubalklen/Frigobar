@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+import tomllib
 from subprocess import CalledProcessError, Popen, run
 
 import pathspec
@@ -126,6 +127,72 @@ def _create_ignore_fn(base_dir, target_directory, git_files=None, gitignore_spec
     return ignore_fn
 
 
+PYPROJECT_PATH_FIELDS = [
+    ["tool", "setuptools", "packages", "find", "where"],
+    ["tool", "pytest", "ini_options", "pythonpath"],
+    ["tool", "pytest", "ini_options", "testpaths"],
+    ["tool", "hatch", "build", "targets", "wheel", "packages"],
+    ["tool", "hatch", "build", "targets", "sdist", "include"],
+]
+
+
+def _get_nested(data, keys):
+    for key in keys:
+        if not isinstance(data, dict) or key not in data:
+            return None
+        data = data[key]
+    return data
+
+
+def _compute_path_replacement(value, include_dir_name, pyproject_inside_include):
+    if pyproject_inside_include:
+        if value == ".":
+            return f"script/{include_dir_name}"
+        return f"script/{include_dir_name}/{value}"
+    else:
+        if value == include_dir_name:
+            return f"script/{include_dir_name}"
+        if value.startswith(include_dir_name + "/"):
+            return f"script/{value}"
+        return None
+
+
+def _patch_pyproject_paths(pyproject_path, include_dir_name, pyproject_inside_include):
+    with open(pyproject_path, "rb") as f:
+        data = tomllib.load(f)
+
+    replacements = []
+    for field_path in PYPROJECT_PATH_FIELDS:
+        value = _get_nested(data, field_path)
+        if value is None:
+            continue
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, str):
+                    new_val = _compute_path_replacement(
+                        item, include_dir_name, pyproject_inside_include
+                    )
+                    if new_val:
+                        replacements.append((item, new_val))
+        elif isinstance(value, str):
+            new_val = _compute_path_replacement(value, include_dir_name, pyproject_inside_include)
+            if new_val:
+                replacements.append((value, new_val))
+
+    if not replacements:
+        return
+
+    with open(pyproject_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    for old_val, new_val in replacements:
+        content = content.replace(f'"{old_val}"', f'"{new_val}"')
+        content = content.replace(f"'{old_val}'", f"'{new_val}'")
+
+    with open(pyproject_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
+
 def create_frigobar(
     script_path: str,
     target_directory: str = "frigobar",
@@ -218,6 +285,21 @@ def create_frigobar(
         pyproject_path = os.path.join(os.path.dirname(script_path), "pyproject.toml")
         if os.path.exists(pyproject_path):
             shutil.copy(pyproject_path, target_directory)
+
+    # Patch pyproject.toml paths when using include_directory
+    if include_directory:
+        target_pyproject = os.path.join(target_directory, "pyproject.toml")
+        if os.path.exists(target_pyproject):
+            include_dir_name = os.path.basename(include_directory)
+            if pyproject_file:
+                pyproject_source_dir = os.path.dirname(os.path.abspath(pyproject_file))
+            else:
+                pyproject_source_dir = os.path.dirname(script_path)
+            include_abs = os.path.abspath(include_directory)
+            pyproject_inside_include = os.path.commonpath(
+                [pyproject_source_dir, include_abs]
+            ) == os.path.normpath(include_abs)
+            _patch_pyproject_paths(target_pyproject, include_dir_name, pyproject_inside_include)
 
     # Create bat file
     if include_directory:

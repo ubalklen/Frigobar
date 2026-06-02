@@ -613,3 +613,188 @@ def test_create_frigobar_copy_directory_with_non_ascii_filenames(tmp_path):
     assert path.exists(path.join(str(target), "script", "script.py"))
     assert path.exists(path.join(str(target), "script", "Notificação.docx"))
     assert path.exists(path.join(str(target), "script", "résumé.txt"))
+
+
+def test_patch_pyproject_paths_setuptools_where_outside(tmp_path):
+    """When pyproject.toml is outside include_directory, paths matching include_dir_name are prefixed"""
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    src_dir = source_dir / "src"
+    src_dir.mkdir()
+    (src_dir / "main.py").write_text("print('hello')")
+    (src_dir / "__init__.py").write_text("")
+
+    pyproject_content = '[project]\nname = "my-pkg"\nversion = "1.0"\n\n[tool.setuptools.packages.find]\nwhere = ["src"]\n'
+    pyproject_file = source_dir / "pyproject.toml"
+    pyproject_file.write_text(pyproject_content)
+
+    target = tmp_path / "dist"
+
+    with patch("frigobar.frigobar._get_git_non_ignored_files", return_value=None):
+        frigobar.create_frigobar(
+            script_path=str(src_dir / "main.py"),
+            target_directory=str(target),
+            include_directory=str(src_dir),
+            pyproject_file=str(pyproject_file),
+        )
+
+    with open(path.join(str(target), "pyproject.toml"), "r") as f:
+        content = f.read()
+    assert 'where = ["script/src"]' in content
+
+
+def test_patch_pyproject_paths_setuptools_where_inside(tmp_path):
+    """When pyproject.toml is inside include_directory, all paths get script/<include_dir_name> prefix"""
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    lib_dir = source_dir / "lib"
+    lib_dir.mkdir()
+    (lib_dir / "__init__.py").write_text("")
+    (source_dir / "main.py").write_text("print('hello')")
+
+    pyproject_content = '[project]\nname = "my-pkg"\nversion = "1.0"\n\n[tool.setuptools.packages.find]\nwhere = ["lib"]\n'
+    pyproject_file = source_dir / "pyproject.toml"
+    pyproject_file.write_text(pyproject_content)
+
+    target = tmp_path / "dist"
+
+    with patch("frigobar.frigobar._get_git_non_ignored_files", return_value=None):
+        frigobar.create_frigobar(
+            script_path=str(source_dir / "main.py"),
+            target_directory=str(target),
+            include_directory=str(source_dir),
+        )
+
+    with open(path.join(str(target), "pyproject.toml"), "r") as f:
+        content = f.read()
+    assert 'where = ["script/project/lib"]' in content
+
+
+def test_patch_pyproject_paths_dot_where_inside(tmp_path):
+    """When pyproject.toml is inside include_directory and where=['.'], it becomes script/<dir>"""
+    source_dir = tmp_path / "myproject"
+    source_dir.mkdir()
+    (source_dir / "main.py").write_text("print('hello')")
+    (source_dir / "__init__.py").write_text("")
+
+    pyproject_content = '[project]\nname = "my-pkg"\nversion = "1.0"\n\n[tool.setuptools.packages.find]\nwhere = ["."]\n'
+    pyproject_file = source_dir / "pyproject.toml"
+    pyproject_file.write_text(pyproject_content)
+
+    target = tmp_path / "dist"
+
+    with patch("frigobar.frigobar._get_git_non_ignored_files", return_value=None):
+        frigobar.create_frigobar(
+            script_path=str(source_dir / "main.py"),
+            target_directory=str(target),
+            include_directory=str(source_dir),
+        )
+
+    with open(path.join(str(target), "pyproject.toml"), "r") as f:
+        content = f.read()
+    assert 'where = ["script/myproject"]' in content
+
+
+def test_patch_pyproject_paths_hatch_packages(tmp_path):
+    """Hatch build targets packages field is also patched"""
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    src_dir = source_dir / "src"
+    src_dir.mkdir()
+    pkg_dir = src_dir / "mypkg"
+    pkg_dir.mkdir()
+    (pkg_dir / "__init__.py").write_text("")
+    (src_dir / "main.py").write_text("print('hello')")
+
+    pyproject_content = '[project]\nname = "my-pkg"\nversion = "1.0"\n\n[tool.hatch.build.targets.wheel]\npackages = ["src/mypkg"]\n'
+    pyproject_file = source_dir / "pyproject.toml"
+    pyproject_file.write_text(pyproject_content)
+
+    target = tmp_path / "dist"
+
+    with patch("frigobar.frigobar._get_git_non_ignored_files", return_value=None):
+        frigobar.create_frigobar(
+            script_path=str(src_dir / "main.py"),
+            target_directory=str(target),
+            include_directory=str(src_dir),
+            pyproject_file=str(pyproject_file),
+        )
+
+    with open(path.join(str(target), "pyproject.toml"), "r") as f:
+        content = f.read()
+    assert 'packages = ["script/src/mypkg"]' in content
+
+
+def test_patch_pyproject_paths_no_patch_without_include_directory(tmp_path):
+    """pyproject.toml is not patched when include_directory is not used"""
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    (source_dir / "main.py").write_text("print('hello')")
+
+    pyproject_content = '[project]\nname = "my-pkg"\nversion = "1.0"\n\n[tool.setuptools.packages.find]\nwhere = ["src"]\n'
+    pyproject_file = source_dir / "pyproject.toml"
+    pyproject_file.write_text(pyproject_content)
+
+    target = tmp_path / "dist"
+
+    frigobar.create_frigobar(
+        script_path=str(source_dir / "main.py"),
+        target_directory=str(target),
+        pyproject_file=str(pyproject_file),
+    )
+
+    with open(path.join(str(target), "pyproject.toml"), "r") as f:
+        content = f.read()
+    assert 'where = ["src"]' in content
+
+
+def test_patch_pyproject_paths_no_patch_with_requirements(tmp_path):
+    """pyproject.toml is not present when requirements_file is used"""
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    src_dir = source_dir / "src"
+    src_dir.mkdir()
+    (src_dir / "main.py").write_text("print('hello')")
+
+    req_file = source_dir / "requirements.txt"
+    req_file.write_text("requests\n")
+
+    target = tmp_path / "dist"
+
+    with patch("frigobar.frigobar._get_git_non_ignored_files", return_value=None):
+        frigobar.create_frigobar(
+            script_path=str(src_dir / "main.py"),
+            target_directory=str(target),
+            include_directory=str(src_dir),
+            requirements_file=str(req_file),
+            python_version="3.12",
+        )
+
+    assert not path.exists(path.join(str(target), "pyproject.toml"))
+
+
+def test_patch_pyproject_paths_pytest_pythonpath(tmp_path):
+    """pytest pythonpath field is also patched"""
+    source_dir = tmp_path / "project"
+    source_dir.mkdir()
+    src_dir = source_dir / "src"
+    src_dir.mkdir()
+    (src_dir / "main.py").write_text("print('hello')")
+
+    pyproject_content = '[project]\nname = "my-pkg"\nversion = "1.0"\n\n[tool.pytest.ini_options]\npythonpath = ["src"]\ntestpaths = ["tests"]\n'
+    pyproject_file = source_dir / "pyproject.toml"
+    pyproject_file.write_text(pyproject_content)
+
+    target = tmp_path / "dist"
+
+    with patch("frigobar.frigobar._get_git_non_ignored_files", return_value=None):
+        frigobar.create_frigobar(
+            script_path=str(src_dir / "main.py"),
+            target_directory=str(target),
+            include_directory=str(src_dir),
+            pyproject_file=str(pyproject_file),
+        )
+
+    with open(path.join(str(target), "pyproject.toml"), "r") as f:
+        content = f.read()
+    assert 'pythonpath = ["script/src"]' in content
